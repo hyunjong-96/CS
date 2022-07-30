@@ -435,7 +435,6 @@
   + GC 모니터링을 통해 코드를 리펙토링하거나 GC튜닝을 하여 GC를 처리하도록 한다.
 
 
-
 </details>
 
 -----------------------
@@ -457,7 +456,36 @@
 
 -----------------------
 
-+ 
++ char 
+  + 1개의 문자만 저장하는 원시타입
+
++ String
+  + 문자열 주소를 저장하는 참조타입
+
++ char는 원시타입이기 때문에 동일성 비교(==)가 가능하지만 String은 참조타입이기 때문에 동일성 비교시 참조 주소를 비교하기 때문에 같은 value를 비교하기 위해서는 동등성 비교(equals())를 해야한다.
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 동일성 비교(==) vs 동등성 비교(equals())
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+-----------------------
+
++ 객체일 경우 동일성 비교는 참조 주소를 비교하고 동등성 비교는 객체의 value를 비교
 
 </details>
 
@@ -480,7 +508,21 @@
 
 -----------------------
 
-+ 
++ String
+  + <img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/181692343-8d8792b1-09dd-40d1-ba6f-7460e64c84bc.png">
+  + String 선언은 ""선언과 new String() 선언이 있다.
+  + ""선언은 Heap의 String Pool에 저장이되며 같은 value일 때 동일성 비교가 가능하다.
+  + new String()선언은 Heap의 Eden에 저장되며 같은 value라도 다른 참조 주소를 가지기때문에 동등성 비교를 해야한다.
+  + 문자열 연산시 새로운 객체가 생성되어 저장되기 때문에 Heap메모리 관리에 치명적일수 있다.
+
++ StringBuilder
+  + StringBuilder는 new StringBuilder()로 선언하며 문자열 연산시 StringBuilder의 객체의 크기가 변할 뿐 새로운 객체가 생성되지 않아 메모리관리에 효율적이다.
+  + 비동기화 처리
+
++ StringBuffer
+  + StringBuilder와 마찬가지로 문자열 연산시 객체의 크기가 변할 뿐 새로운 객체가 생성되지 않아 메모리 관리에 효율적이다.
+  + 동기화 처리
+
 
 
 </details>
@@ -504,31 +546,18 @@
 
 -----------------------
 
-+ 
++ 원시 타입(Primitive type) : 크기가 작고 고정적이기 때문에 Stack메모리에 저장
+  + 논리형 : boolean (1bit)
+  + 문자형 : char (2bit)
+  + 정수형 : byte (8bit), int (32bit), long (64bit)
+  + 실수형 : float (32bit), double (64bit)
 
++ 참조 타입(Reference type)
+  + 크기가 가변적이고 동적이다.
+  + 데이터는 Heap메모리에서 관리되고 참조 주소는 Stack메모리에서 관리된다.
+  + 더 이상 참조되지 않으면 GC 삭제 대상이 된다.
+  + value를 필요로 할때마다 언박상 과정을 거치게 되어 접근속도가 느려진다.
 
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### 참조 타입
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
------------------------
-
-+ 
 
 
 </details>
@@ -552,31 +581,8 @@
 
 -----------------------
 
-+ 
++ 클래스나 메소드를 사용할때 데이터 타입을 외부에서 설정하는 것
 
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### 동일성 비교(==) vs 동등성 비교(equals())
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
------------------------
-
-+ 
 
 </details>
 
@@ -597,35 +603,18 @@
 
 -----------------------
 
-+ 
++ call by value
+  + 함수 호출시 인자로 전달되는 값을 복사하여 전달되기 때문에 함수 내부에서 인자 값이 변경되어도 외부에서는 영향을 받지 않아 값이 변경되지 않는다.
 
-<img width="60%" alt="image" src="https://user-images.githubusercontent.com/57162257/181691033-9553a6ef-09d2-4844-bfd4-ab9e16695d8e.png">
-
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### String
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
++ call by reference
+  + 함수 호출시 인자로 전달되는 변수의 주소를 전달하기 때문에 함수 내부에서 인자 값이 변경되면 외부에서 영향을 받아 값이 변경된다.
++ java는 call by value
+  + <img width="60%" alt="image" src="https://user-images.githubusercontent.com/57162257/181691033-9553a6ef-09d2-4844-bfd4-ab9e16695d8e.png">
+  + java는 함수 호출시 인자로 전달되는 변수의 주소를 복사하여 전달한다. 그렇기 때문에 인자의 주소를 변경하더라도 복사된 주소이기 때문에 외부 변수에 영향을 주지 않아 변경이되지 않는다.
+  + 하지만 복사한 주소도 Heap영역의 동일한 데이터를 참조하고 있기 때문에 인자의 value를 변경한다면 외부 변수의 value는 영향을 받아 value가 변경된다.
+  + 즉, 인자의 value를 변경하면 외부 변수의 value도 변경되어 call by reference로 착각할 수 있지만, 인자는 복사된 주소이기 때문에 결국은 call by value이다.
 
 
------------------------
-
-+ 
-
-<img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/181692343-8d8792b1-09dd-40d1-ba6f-7460e64c84bc.png">
 
 </details>
 
@@ -648,7 +637,34 @@
 
 -----------------------
 
-+ 
++ 자바 내부에서 사용하는 객체 또는 데이터를 외부 자바 시스템에서 사용할 수 있도록 `바이트 형태`로 변환하는 기술 (JVM에 저장된 객체, 데이터 -> 바이트 형태로 변환)
++ 직렬화를 사용하는 이유
+  + 원시 타입의 경우 크기가 고정적이기 때문에 바이트 단위 변환에 문제가 없지만, 객체인 경우 크기가 가변적이기 때문에 객체를 바이트 형태로 변환하기 위해서 별도의 변환 과정이 필요하기 때문이다.
+
++ 방법
+  + 직렬화하려는 객체를 Serializable 인터페이스를 상속받고 ObjectOutputStream을 이용하여 직렬화를 진행한다.
+
++ **역직렬화(Deserialization)**
+  + 바이트 형태의 데이터를 Object나 데이터로 변환하는 기술
+  + 직렬화한 대상 객체는 동일한 `serialVersionUID`를 가져야한다.
+  + 방법
+    + ObjectInputStream을 통해 역직렬화를 진행
+    + 가져온 ObjectInputStream의 readObject()를 통해 역직렬화한 객체를 가져온다.
+
+  + 주의사항
+    + 역직렬화를 하기 위해서는 직렬화한 객체와 동일한 serialVersionUID와 동일한 객체가 필요하다.
+    + serailVersionUID가 같아도 객체의 필드 개수가 다르다면 다른 객체로 인식하여 역직렬화가 불가능하다.
+    + 동일한 객체여도 serialVersionUID가 다르면 다른 객체로 인식하여 역직렬화가 불가능하다.
+      + 동일한 객체면 별도의 설정이 없다면 자바에서 같은 serialVersionUID로 설정한다.
+
++ Transient
+  + 객체에 Transient예약어를 선언한 변수는 Serializable 대상에서 제외되어 역직렬화 했을때 존재하지 않는 값으로 나타난다.
+  + 이는 보안상이나 필요없는 데이터를 직렬화하지 않을때 사용하는 예약어이다.
+
++ 사용시기
+  + 서블릿 세션 : 세션을 서블릿 메모리상에서 운용한다면 직렬화가 필요없지만, 파일로 저장하거나 세션 클러스터링 등을 이용할때 직렬화를 통해 저장되어 전달된다.
+  + 캐시 : Redis, memcached 라이브러리에서 사용된다.
+
 
 
 </details>
@@ -672,8 +688,55 @@
 
 -----------------------
 
-+ 
+<img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/181880446-bea276d3-7c23-472a-9fc7-3d9946d27b25.png">
 
+여러 원소를 담을 수 있는 자료구조로 Set과 List는 Collection을 상속하고 Map은 Collections를 직접 상속받고 있다.
+
+- List : 데이터의 중복을 허용하고 순서를 보장하는 자료구조 (인터페이스)
+  - ArrayList
+    - 데이터의 크기가 정해져있지 않아 List의 크기가 가변적으로 변하는 자료구조
+    - 인덱스가 있어 탐색은 빠르지만 삽입,삭제는 느리다.
+  - LinkedList
+    - 각각의 노드를 연결한 자료구조
+    - 노드가 연결되어있어 삽입,삭제는 빠르지만 인덱스가 없어 탐색은 느리다.
+  - Vector
+    - ArrayList와 동일한 동작을 가진다.
+    - 동기화
+    - Vector는 크기가 증가할 때 100%증가하지만, ArrayList는 50%씩 증가한다.
+- Set : 데이터의 중복을 허용하지 않고 순서를 보장하지 않는 자료구조 (인터페이스)
+  - HashSet
+    - 데이터를 저장할 때 해시코드를 이용해 중복되는 해시코드 여부를 파악하고 없다면 데이터를 저장한다.
+    - 비동기화
+  - LinkedHashSet
+    - HashSet과 동일한 동작을 한다.
+    - 순서 보장
+    - 비동기화
+  - TreeSet
+    - HashSet과 동일한 동작을 한다.
+    - 오름차순 정렬 보장하기 때문에 직접 정의한 객체라면 Comparator를 구현하여 정렬 방법을 지정해줘야한다.
+    - 비동기화
+- Map : 데이터를 저장할때 key, value 형태로 저장하고 key의 중복을 허용하지 않는 자료구조 (인터페이스)
+  - HashMap
+    - 데이터를 저장할 때 key와 value를 선언하여 저장하며 key의 중복을 허용하지 않는다.
+    - 내부 해시코드에 따라 키 순서가 정해지기 때문에 순서를 보장하지 않는다.
+    - key와 value의 null을 허용한다.
+    - 비동기
+  - LinkedHashMap
+    - HashMap과 동일한 동작을 한다.
+    - 순서 보장
+    - key와 value의 null을 허용한다.
+  - TreeMap
+    - 내부적으로 레드-블랙 트리로 저장된다.
+    - key의 오름차순 정렬을 보장하기 때문에 직접 정의한 객체인 key라면 Comparator를 구현하여 정렬 방법을 지정해줘야한다.
+    - key와 value의 null을 비허용한다.
+  - HashTable
+    - HashMap과 동일한 동작을 한다.
+    - key와 value의 null을 비허용한다.
+    - 모든 작업(쓰기, 읽기) 동기화
+  - ConcurrentHashMap
+    - HashMap과 동일한 동작을 한다.
+    - key와 value의 null을 비허용한다.
+    - 쓰기작업만 동기화
 
 </details>
 
@@ -696,7 +759,12 @@
 
 -----------------------
 
-+ 
++ Java 8에 등장한 기술로 반복 요소 계산 처리 기능을 제공하는 API
++ 특징
+  + Parallel 메소드를 제공해서 병렬처리가 가능하다 (내부적으로 스레드풀을 만들어 병렬 처리)
+  + 불변성(Immutable)이기때문에 원본 데이터를 읽기만 할 뿐 변경하지 않는다.
+  + 내부반복으로 작업을 수행하며 최종 연산 후 stream이 닫히므로 일회성 API이다.
+
 
 
 </details>
@@ -720,7 +788,14 @@
 
 -----------------------
 
-+ 
++ 계산시점
+  + Collection : Collection은 데이터를 메모리에 저장하는 자료구조이므로 Collection에 저장되어있는 요소는 계산이 완료되어 있어야 한다.
+  + Stream : stream()을 호출하는 시점부터 요소를 계산한ㄷ.
+
++ 반복
+  + Collection : 저장되어있는 요소는 계산이 완료되어 있어야하기 때문에 외부에서 반복하여 저장된다. (외부 반복)
+  + Stream : 내부에서 중간연산, 최종 연산등으로 반복하여 저장한다. (내부 반복)
+
 
 
 </details>
@@ -744,7 +819,16 @@
 
 -----------------------
 
-+ 
++ Stream의 내부연산은 작업을 바로 실행하는 것이 아니라 마지막에 어떤 연산을 필요로 하는지 판단 후 연산 작업을 수행한다.
++ 즉, 내부 연산시 최종 연산자를 판단하고 불필요한 반복작업을 수행하지 않고 종료하는 것.
++ stream에서 제공하는 최종 연산자
+  + limit() : 연산 사이즈 제어
+  + findFirst() : 연산 결과의 첫번째 요소를 반환 후 종료
+  + findAny() : 병렬연산하여 아무값 반환 후 종료
+  + anyMatch() : stream 요소 중 조건이 true인 요소가 있다면 종료
+  + allMatch() : stream 요소 중 조건이 하나라도 false인 요소가 있다면 종료
+  + nonMatch() : stream 요소 중 조건이 하나라도 true인 요소가 있다면 종료
+
 
 
 </details>
@@ -768,7 +852,8 @@
 
 -----------------------
 
-+ 
++ 기본 타입인 데이터를 객체로 감싸주는 클래스로, 기본타입 데이터를 Wrapper Class 인스턴스의 value로 저장.
++ 동등성 비교를 통해 value를 비교해야 한다.
 
 
 </details>
@@ -792,7 +877,8 @@
 
 -----------------------
 
-+ 
++ 박싱 : 기본 타입(char, int ...)을 wrapper class의 인스턴스로 변경하는 과정
++ 언박싱 : wrapper class의 인스턴스에 저장된 value를 기본 타입으로 꺼내는 과정
 
 
 </details>
@@ -816,7 +902,10 @@
 
 -----------------------
 
-+ 
++ Stream
++ Optional
++ 함수형인터페이스
++ 람다 표현식
 
 
 </details>
@@ -840,7 +929,11 @@
 
 -----------------------
 
-+ 
++ 값의 존재여부를 표현하는 클래스
++ 함수
+  + orElse : 값의 null여부와 상관없이 호출
+  + orElseGet : 값이 null인경우 호출
+
 
 
 </details>
@@ -864,7 +957,10 @@
 
 -----------------------
 
-+ 
++ 구현해야할 추상 메소드 하나만 정의된 인터페이스로써 Java 8에 등장.
++ `@FunctionalInterface` 어노테이션을 통해 객체 선언 및 오버라이딩 필요없이 람다식을 통해 코드를 간결하게 작성하는 것이 가능하다.
+
+<img width="527" alt="image" src="https://user-images.githubusercontent.com/57162257/181903333-5a02e0ee-c515-4eb0-a6be-4cee1cf7da2f.png">
 
 
 </details>
@@ -888,7 +984,9 @@
 
 -----------------------
 
-+ 
++ 익명의 함수를 단순한 문법으로 나타내는 표현식으로써 Java 8에 등장.
++ 구현해야할 하나의 추상 메소드만 정의되어있는 함수형 인터페이스에 사용가능.
++ 병렬작업에 효율적이다.
 
 
 </details>
@@ -912,8 +1010,19 @@
 
 -----------------------
 
-+ 
++ default GC가 parallel GC에서 G1 GC로 변경되었다.
++ String 메소드 추가
+  + isBlank() : 문자열이 비어있거나 공백일 때 true
+  + strip : 문자열 앞 뒤의 공백 제거
+  + repeat(n) : 문자열을 n번 반복하여 반환
 
++ Collection의 toArray()메소드를 오버로딩하는 메소드가 추가되어 원하는 타입의 배열을 선택하여 반환.
+  + <img width="514" alt="image" src="https://user-images.githubusercontent.com/57162257/181903621-6b0527b5-cddf-4fd7-b6e0-46202a0bd9ac.png">
+
++ 람다 표현식에서 지역변수에 var 사용이 가능해져 stream 요소의 변경이 가능해졌다.
+  + <img width="561" alt="image" src="https://user-images.githubusercontent.com/57162257/181903638-846ceb6c-6dc8-4294-bcc9-519a7b696492.png">
+
++ javac로 컴파일하지 않고 java파일을 수행할 수 있다.
 
 </details>
 
@@ -936,7 +1045,123 @@
 
 -----------------------
 
-+ 
++ synchronized
+
+  + synchronized
+
+    + 일반 메소드에 synchronized 선언 시, 해당 객체(this)에 lock이 걸리기 때문에 같은 객체를 여러 스레드가 사용한다면 병목 현상이 발생할 수 있다.
+
+      ```java
+      class synchronized{
+        private int shareSource;
+        
+        public synchronized checkSyn(int source){
+            if(shareSource != source) System.out.println("동기화 실패");	//동기화 처리 (로그 x)
+        }
+      }
+      ```
+
+    + 만약 위 코드에서 synchronized를 제거한다면 "동기화 실패" 로그가 발생한다.
+
+  + synchronized block
+
+    + 메소드에 synchronized 선언 시 해당 객체에 lock이 걸리지만 synchronized block을 사용한다면 객체가 아닌 해당 메소드에서만 lock이 걸리게 된다. (필요한 부분만 동기화)
+
+      ```java
+      class synchronized{
+        private int shareSource;
+        
+        public checkSyn(int source){
+      		synchronized(this){
+            if(shareSource != source) System.out.println("동기화 실패");	//동기화 처리 (로그 x)
+          }
+        }
+      }
+      ```
+
+    + synchronized block시 인자에 this로 걸어주게 되면 this를 인자로 가진 synchronized block은 모두 lock이 걸리게 된다. 만약 synchronized block별로 lock을 걸어줄 메소드를 지정해주려면 Object1, Object2 등의 별도로 선언한 객체로 동기화 처리를 할 synchronized block의 인자로 정의하게 되면 object1으로 정의한 메소드끼리 동기화가되고 object2로 정의한 메소드끼리 동기화가 된다.
+
+      ```java
+      class synchronized{
+      	private final List<Integer> list1 = new ArrayList<>();
+        private final List<Integer> list2 = new ArrayList<>();
+        
+        private final Object object1 = new Object();
+        private final Object objcet2 = new Object();
+        
+        /// object1 끼리 동기화
+        
+        public void addList1(int source){
+          synchronized(object1){
+            list1.add(source);
+          }
+        }
+        
+        public int getList1(int index){
+          synchronized(object1){
+            return list1.get(index);
+          }
+        }
+        
+        ///
+        /// object2 끼리 동기화
+        
+        public void addList2(int source){
+          synchronized(object2){
+            list2.add(source);
+          }
+        }
+        
+        public int getList2(int index){
+          synchronized(object2){
+            return list2.get(index);
+          }
+        }
+        ///
+      }
+      ```
+
+  + singletone synchronized
+
+    + 싱글톤은 하나의 객체를 여러 스레드가 공유하는 디자인 패턴이므로 하나의 객체를 생성하여 여러 스레드가 사용하는 것과 같은 동기화 문제가 발생할 수 있다.
+
+  + static method synchronized
+
+    + static method에 synchronized를 선언하면 해당 class에 lock을 걸어주기 때문에 해당 클래스의 객체를 사용하는 스레드는 병목 현상이 발생할 수 있다.
+
+      ```java
+      class synchronized{
+        private int shareSource;
+        
+        public static synchronized checkSyn(int source){
+           if(shareSource != source) System.out.println("동기화 실패");	//동기화 처리 (로그 x)
+        }
+      }
+      ```
+
+  + static method synchronized와 method synchronized 혼용
+
+    + static method의 synchronized는 class에 lock을 걸어주고 일반 method의 synchronized는 해당 객체(this)에 lock을 걸어준다. 그렇기 때문에 static method의 synchronized는 동기화 처리가 되어 class에서 공유하는 자원에 대해 동기화 처리가 잘 되지만 일반 method는 해당 객체(this)에 lock을 걸어주기 때문에 class에서 공유하는 자원에 대해 동기화가 깨지게 된다.
+
+      ```java
+      class synchronized{
+        private int shareSource;
+        
+        public static synchronized checkStaticMethodSyn(int source){
+          if(shareSource != source) System.out.println("동기화 실패");	//동기화 깨짐 (로그 o)
+        }
+        
+        public synchronized checkMethodSyn(int source){
+          if(shareSource != source) System.out.println("동기화 실패");	//동기화 깨짐 (로그 o)
+        }
+      }
+      ```
+
+    + 즉, static method synchronized와 일반 method synchronized를 함께 사용할때 static method간에서는 동기화 처리가 되지만, 일반 method synchronzied에서 동기화를 깨버리기 때문에 결과적으로 동기화 처리가 되지 않는다.
+
++ volatile : 키워드가 선언된 자원은 하나의 스레드만 write하고 나머지 스레드는 read만 한다는 전제 하에 동시성 부여
+
++ atomic : 여러 스레드에서 wirte를 해도 동시성 문제가 발생하지 않는다. Synchronized 보다 적은 비용으로 동시성 보장.
 
 
 </details>
@@ -960,7 +1185,8 @@
 
 -----------------------
 
-+ 
++ 멀티스레딩을 수행할 클래스는 Thread 클래스를 상속받아 run() 함수를 오버라이딩하여 로직을 수행한다.
++ 멀티스레딩을 수행할 클래스는 Runnable 인터페이스를 상속받아 run()을 구현하여 Thread 생성자의 인수로 넘긴다.
 
 
 </details>
@@ -984,8 +1210,14 @@
 
 -----------------------
 
-+ 
++ final : 변수, 함수, 클래스가 변경 불가능 하도록 만든다.
+  + 기본 타입 : 해당 변수의 값이 변경되지 못한다.
+  + 참조 타입 : 해당 변수가 참조하는 Heap영역내의 객체 이외의 다른 객체를 가리키도록 변경할 수 없다.
+  + 메소드 : 오버라이드를 할 수 없다. (오버로드는 가능)
+  + 클래스 : 해당 클래스를 상속받을 수 없다.
 
++ finally : catch/try 블럭에서 결과에 상관없이 수행되는 finally 블럭
++ finalize : 해당 객체가 GC의 대상이 될때 호출되는 메소드
 
 </details>
 
@@ -1008,35 +1240,10 @@
 
 -----------------------
 
-+ 
-
-
-</details>
-
------------------------
-
-<br>
-
-
-
-
-
-<br>
-
------------------------
-
-### Java란
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
------------------------
-
-+ 
-
-
++ public : JVM이 패키지나 클래스에 상관없이 어느곳에 존재하는 main함수를 호출 할수 있기 위함
++ static : JVM이 객체를 생성없이 main을 호출 할수 있기 위함
++ void : main함수가 JVM에 반환하는 것이 없음
++ main : 자바 프로그램 진입점
 
 </details>
 
