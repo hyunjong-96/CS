@@ -102,7 +102,7 @@
 - 특징
   - POJO (Plain Old Java Object)
     - 특정 기술(hibernate 등..)과 환경에 종속되지 않는 순수한 자바 객트
-    - 미리 정의된 클래스를 확장, 미리 정의된 인터페이스를 구현, 미리 정의된 어노테이션을 포함하는 것은 POJO가 아니다.
+    - 미리 정의된 클래스를 확장, 미리 정의된 인터페이스를 구현을 포함하는 것은 POJO가 아니다.
 
   - IoC (Inversion Of Control)
     - 객체의 생명주기와 의존성 관리를 컨테이너에서 관리하여 개발자가 아닌 spring에서 객체를 제어한다.
@@ -130,7 +130,7 @@
 
 -----------------------
 
-### DI
+### DI (Dependency Injection)
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -193,7 +193,6 @@
 -----------------------
 
 - 객체의 생명주기 관리와 의존성 관리를 개발자가 아닌 컨테이너에 넘김으로써 모든 객체에 대한 제어권이 바뀌었다는 것을 말한다.
-- IoC 컨테이너에서 관리하는 객체는 외부에서 주입되기 때문에 모듈간 결합도가 낮아지며 런타임시 의존관계가 결정되기 때문에 유연성이 높아진다.
 
 <img width="40%" alt="image" src="https://user-images.githubusercontent.com/57162257/184129954-9fae26c1-8dbb-48ee-9f44-0f912006d59f.png">
 
@@ -374,8 +373,6 @@
   - Private 생성자를 갖고 있어 상속이 불가능하다.
 
     - 싱글톤은 자신만이 객체를 생성할 수 있도록 private로 제한한다.
-    - 다형성을 사용하기 위해서는 기본 생성자가 필요하므로 private로 인해 객체지향의 장점을 적용할 수없다.
-    - 객체지향적이지 못한 static필드와 static 메서드를 사용해야한다.
 
   - 테스트하기 힘들다.
 
@@ -420,7 +417,7 @@
 
 -----------------------
 
-### AOP
+### AOP (Aspect Oriented Programming)
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -431,7 +428,71 @@
 
 -----------------------
 
-- 
+- 관점지향 프로그래밍으로써 어떤 로직은 핵심적 관점과 부가적 관점으로 나누어 관점에 따라 모듈화 하는것.
+- 여러 객체에서 공통으로 사용하는 기능(흩어진 관심사)을 구분함으로써 재사용성을 높여주는 프로그래밍 기법이다.
+- 공통으로 사용되는 기능을 모듈화하는 것을 `크로스 컷팅`이라고도 한다.
+- 주요 개념
+  - Aspect 
+    - 흩어진 관심사를 모듈화 한 것
+    - Advice + Pointcut을 모듈화 한 것
+
+  - Target
+    - aspect를 적용하는 곳 (클래스, 메서드)
+
+  - Advice
+    - 실질적으로 aspect가 어떤 일을 할것인지에 대한 부가기능을 담은 구현체
+
+  - JoinPoint
+    - advice가 적용될수 있는 위치
+
+  - PointCut
+    - JoinPoint에서 advice가 적용될 위치
+    - 종류
+      - @Before : 대상 메서드 수행 전
+      - @After : 대상 메서드 수행 후
+      - @After-returning : 대상 메서드 정상 수행 후
+      - @After-throwing : 대상 메서드 예외 발생 후
+      - @Around : 대상 메서드의 수행 전/후
+
+- 특징
+  - 스프링 빈에만 AOP 적용가능
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 프록시 객체
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 타겟 객체를 감싸서 요청을 대신 받아주는 랩핑 오브젝트.
+- 호출자가 타겟 객체를 호출하게 되면 타겟이 아닌 타겟을 감싸고 있는 프록시가 호출되어 타겟 메소드의 선처리, 후처리를 실행시키도록 구성되어있다.
+- 어떤 클래스가 AOP의 대상이라면 해당 클래스의 빈이 만들어질 때 AOP가 프록시를 자동으로 만들고 원본 클래스 대신 프록시를 빈으로 등록한다.
+- 대표적으로 @Transactional 어노테이션
+  - @Transactional 어노테이션이 감싸져있는 클래스를 호출할 때 프록시 객체가 호출되어 commit과 rollback등의 반복되는 기능을 처리해준다.
+
+- 특징
+  - private method는 프록시객체에서 타겟 객체의 메소드를 참조할수 없기 때문에 private는 프록시 객체에서 사용할 수 없다.
+  - 내부에서 자신의 메소드 호출시 프록시 미 적용
+    - 프록시 객체에서 선처리 후 타겟 메소드를 실행하기 때문에 내부에서 타겟 메소드 실행시 프록시가 적용되지 않고 메소드가 실행된다.
+    - 해결방법은 실행 할 메소드를 다른 클래스로 빼서 프록시 처리 한 후 타겟 메소드를 호출한다
+
 
 </details>
 
@@ -531,7 +592,32 @@
 
 -----------------------
 
-- 
+<img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/184375555-5ced73be-646b-420f-acf4-4abfa70ba727.png">
+
+- Filter
+  - spring context 외부에 존재
+  - DispatchServlet 이전에 실행되며, 스프링과 무관하게 지정된 자원에 대해 동작한다.
+  - 필터가 동작하도록 지정된 자원 이전에 요청내용을 변경하거나 체크할 수 있으며 자원의 처리가 끝난 후 응답 내용에 대해서 수정할 수 있다.
+  - 보안 관련 공통 작업, 이미지/ 데이터 압축 및 문자열 인코딩
+  - 메서드
+    - init(): 필터 인스턴스 초기화
+    - doFilter() : 전/후 처리
+    - destroy() : 필터 인스턴스 종료
+
+- Interceptor
+  - spring context 내부에 존재
+  - DispatcherServlet이 Controller를 호출하기 전,후에 실행.
+  - 모든 객체(bean)에 접근이 가능하다.
+  - 인증/인가 등의 공통 작업, Controller로 넘겨주는 정보 가공
+  - 메서드
+    - preHanlder() : controller 메서드가 실행되기 전
+    - postHanlder() : controller 메서드 실행 후 view 페이지 렌더링 전
+    - afterCompletion() : view페이지 렌더링 후
+- 실행 순서
+  1. 서버를 실행 시켜 서블릿이 올라오는 동안 init()이 실행되고 그 후, doFilter 실행
+  2. 컨트롤러에 들어가기 전에 preHanlder 실행
+  3. 컨트롤러 수행 후 postHanlder, after Completion, doFilter 순서대로 실행
+  4. 서블릿 종료 시 detroy 실행
 
 </details>
 
@@ -556,7 +642,12 @@
 
 -----------------------
 
-- 
+- Filter, Interceptor, AOP 는 공통된 기능을 처리하기 위한 기능
+- AOP는 Filter와 Interceptor와 다르게 메소드 전,후의 실행 지점이 자유롭게 설정 가능
+- AOP의 advice와 Interceptor의 차이는 파라미터
+  - advice는 JoinPoint를 파라미터로 받아 호출
+  - interceptor는 HttpServletRequest, HttpServletResponse를 파라미터로 사용
+
 
 </details>
 
