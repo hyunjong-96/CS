@@ -446,7 +446,7 @@
     - advice가 적용될수 있는 위치
 
   - PointCut
-    - JoinPoint에서 advice가 적용될 위치
+    - JoinPoint에서 advice가 적용될 지점
     - 종류
       - @Before : 대상 메서드 수행 전
       - @After : 대상 메서드 수행 후
@@ -517,7 +517,106 @@
 
 -----------------------
 
-- 
+<img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/184519286-f56aa90e-7f59-47c4-ab89-421813acc157.png">
+
+- WebServer와 WAS (Web Application Server)
+  - WebServer : Http 기반으로 동작하며 정적 리소스 (정적  HTML, CSS, 이미지, 영상) 제공
+    - NGINX, APACHE
+  - WAS : Http 기반으로 동작하며 Web Server 기능을 포함하여 동적 리소스 (동적 HTML, API, Servlet, Spring MVC) 제공
+    - Tomcat, Jetty
+- Servlet
+  - 자바를 이용해서 클라이언트의 요청을 처리하고 결과를 반환하는 자바 웹 프로그래밍 기술
+- 동작
+  1. 클라이언트의 http 요청이 들어온다.
+  2. WAS는 HttpServletRequest, HttpServletResponse 객체를 생성한다.
+  3. WAS는 url에 맞는 서블릿을 서블릿 컨테이너에서 찾아 호출한다.
+  4. HttpServletRequest로 요청을 처리한다.
+  5. HttpServletResponse에 요청 결과를 반환한다.
+  6. WAS는 HttpServletResponse를 통해 Http Response Message를 생성 후 클라이언트에게 전달.
+- 생명주기
+  - 생성 & 초기화
+    - 클라이언트 요청이 들어오면 서블릿 컨테이너에 서블릿이 등록되어있는지 확인하고, 등록되어 있지 않다면 서블릿 객체를 생성하고, init() 메서드를 통해 서블릿 컨테이너에 서블릿을 초기화한다.
+  - 호출
+    - 클라이언트 요청에 따라 service() 메소드를 호출해서 서블릿이 요청을 처리하도록 한다.
+  - 종료
+    - 컨테이너가 서블릿 종료 요청시 서블릿의 destroy() 메소드가 호출되어 GC에 의해 삭제된다.
+  - 생성, 호출, 종료를 구현하기 위해서는 HttpServlet을 상속받아서 구현한다.
+- 종류
+  - Servlet
+    - 서블릿의 필수 메서드를 선언하고 있는 인터페이스
+    - 이 표준을 구현해야 서블릿 컨테이너가 해당 서블릿을 실행할 수 있다.
+  - GenericServlet
+    - Servlet 인터페이스를 상속하여 서블릿 기능을 구현한 클래스
+  - HttpServlet
+    - GenericServlet을 상속받아 Http 프로토콜을 사용하는 웹 브라우저 기반의 서비스를 제공하는 서블릿을 만들때 상속받아 사용한다.
+    - 요청시 service()가 호출되면서 요청 방식에 따라 doGet(), doPost()가 호출된다.
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 일반 클래스와 서블릿 클래스의 차이
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- main() 메서드에서 직접 호출되는 일반 클래스와는 달리 서블릿 클래스는 서블릿 컨테이너가 클래스 로더에 의해 로드하여 호출한다.
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 서블릿 컨테이너
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 서블릿 클래스의 규칙에 맞게 서블릿 객체를 생성,호출,종료하는 생명주기를 관리한다.
+- 특징
+  - 통신지원
+    - <img width="30%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520267-8a98d1ad-b6db-4e7a-93a8-7ad41788275e.png">
+    - 실제 WAS를 구현하면 많은 사전 작업을 구현해야한다. 하지만 서블릿 컨테이너에서 이러한 과정을 모두 수행해주고 개발자는 비즈니스 로직에 집중할 수 있다.
+
+  - 멀티 스레딩
+    - <img width="40%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520298-d654e921-2b36-43c3-be19-c2fdb1c8f08d.png">
+    - 자바 스레드를 이용해서 서블릿을 호출한다.
+    - 멀티 스레딩을 통해 다중 요청을 효율적으로 처리할 수 있다.
+
+  - 서블릿 생명주기 관리
+  - 선언적 보안 관리
+  - JSP
+    - Java 언어를 기반으로 하는 Server Side 스크립트 언어
+    - HTML 코드에 Java언어를 넣어 동적인 웹 페이지 생성
+    - JSP는 내부적으로 Servlet으로 변환되어 실행
+
 
 </details>
 
@@ -532,6 +631,107 @@
 -----------------------
 
 ### MVC 패턴
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### DispatcherServlet
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Servlet Container & Spring MVC
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- <img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520419-bb7e72c0-84af-4fcd-8f76-31dfc2a1de5a.png">
+- Spring MVC도 서블릿 컨테이너에 의해 관리되는 서블릿
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### NIO Connector & BIO Connector
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Servlet 3.0 & Servlet 3.1
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -647,6 +847,42 @@
 - AOP의 advice와 Interceptor의 차이는 파라미터
   - advice는 JoinPoint를 파라미터로 받아 호출
   - interceptor는 HttpServletRequest, HttpServletResponse를 파라미터로 사용
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 적절한 스레드 찾기
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- spring은 멀티 스레드를 사용하기 때문에 스레드의 양에 따라 서버의 효율성에 많은 영향을 미친다. 그렇기 때문에 최적의 스레드를 찾아 서버를 돌려야한다.
+- 최대 스레드 수에 따르는 영향
+  - 너무 낮게 설정
+    - 서버 리소스는 여유롭지만 클라이언트의 응답 지연
+
+  - 너무 높게 설정
+    - CPU/ 메모리 과부하로 서버 다운
+
+- 애플리케이션 로직의 복잡도 / CPU / 메모리 / 컨텍스트 스위칭 / 네트워크 속도 등 여러가지 요소가 복합적으로 작용하기 때문에 일반화 할 수 없다.
+- 특정 스레드 수를 정하고 성능 테스트 툴을 이용해 물리적으로 적절할 값을 찾아야한다.
+  - naver의 nGrinder
 
 
 </details>
