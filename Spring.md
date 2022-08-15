@@ -602,11 +602,11 @@
 - 서블릿 클래스의 규칙에 맞게 서블릿 객체를 생성,호출,종료하는 생명주기를 관리한다.
 - 특징
   - 통신지원
-    - <img width="30%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520267-8a98d1ad-b6db-4e7a-93a8-7ad41788275e.png">
+    - <img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520267-8a98d1ad-b6db-4e7a-93a8-7ad41788275e.png">
     - 실제 WAS를 구현하면 많은 사전 작업을 구현해야한다. 하지만 서블릿 컨테이너에서 이러한 과정을 모두 수행해주고 개발자는 비즈니스 로직에 집중할 수 있다.
 
   - 멀티 스레딩
-    - <img width="40%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520298-d654e921-2b36-43c3-be19-c2fdb1c8f08d.png">
+    - <img width="60%" alt="image" src="https://user-images.githubusercontent.com/57162257/184520298-d654e921-2b36-43c3-be19-c2fdb1c8f08d.png">
     - 자바 스레드를 이용해서 서블릿을 호출한다.
     - 멀티 스레딩을 통해 다중 요청을 효율적으로 처리할 수 있다.
 
@@ -630,7 +630,7 @@
 
 -----------------------
 
-### MVC 패턴
+### Spring MVC
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -641,7 +641,36 @@
 
 -----------------------
 
-- 
+- spring에서 제공하는 웹 모듈로써 Model, View, Controller의 구성으로 요청을 처리하는 디자인 패턴
+
+- 역할을 나누어 수행하기 때문에 클래스의 결합도가 낮아진다.
+
+- 구조
+
+  - <img width="771" alt="image" src="https://user-images.githubusercontent.com/57162257/184585914-1efdc7ea-843b-43da-ad6f-f14fcd20fba0.png">
+  - Handler Mapping
+    - 요청 URL에 맞는 핸들러(컨트롤러)를 찾아서 반환해준다.
+
+  - Handler Adapter
+    - Hanlder Mapping에서 찾은 핸들러를 수행해줄 adapter를 찾아서 반환해준다.
+
+  - View Resolver
+    - view의 논리주소를 물리주소로 변환한다.
+    - 핸들러를 수행하고 받은 ViewAndaModel을 통해 view의 name으로 view를 찾고 model의 데이터를 view에 넣어준다.
+
+- 실행
+
+  Http 요청이 들어온다
+
+  1. Handler Mapping을 통해 요청 url에 맞는 핸들러를 찾아 반환한다.
+     - 핸들러를 찾는 getHandler() 호출
+  2. Hanlder Mapping에서 찾은 핸들러를 실행시켜줄 어댑터를 Handler Adapter를 통해 어댑터를 찾아 반환한다.
+     - 어댑터를 찾는 getHandlerAdapter() 호출
+  3. 핸들러 어댑터를 통해 핸들러를 호출하고 요청을 처리한 후 ModelAndView를 반환한다.
+     - 핸들러 어댑터의 handle() 호출
+  4. ViewResolver를 호출해 ModelAndView에서 view의 name으로 view를 찾고, model의 데이터로 view에 데이터를 넣는다.
+     - rest api 서비스는 ViewResolver를 호출하지 않는다.
+  5. render를 통해 클라이언트에게 View가 반환된다.
 
 </details>
 
@@ -666,7 +695,45 @@
 
 -----------------------
 
-- 
+- 서블릿 기반의 웹 서비스 일 때,  서블릿 컨테이너에서 요청 url에 맞는 url Mapping과 서블릿을 추가해주어야한다. 하지만 FrontController 패턴을 이용해 모든 요청을 하나의 서블릿에서 처리하고 각 요청에 맞는 핸들러에 dispatch해주는 역할을 해주는 것이 DispathcerServlet이다.
+- 요청이 들어오면 HttpServlet의 service()가 실행되고 DispatchServlet의 doDispatch()가 호출되어 핸들러를 찾고 어댑터를 찾고 비즈니스 로직이 수행되어 클라이언트에게 결과가 반환된다.
+- 상속
+  - ![image-20220815152831066](/Users/flab1/Library/Application Support/typora-user-images/image-20220815152831066.png)
+  - DispatcherServlet -> FrameworkServlet -> HttpServletBean -> HttpServlet -> GenericServlet -> Servlet을 상속받고 있다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+### Handler Mapping과 Handler Adapter의 처리 우선순위
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- Handler Mapping
+  0. RequestMapping HandlerMapping
+     - @ReqeustMapping 어노테이션을 사용하고 url mapping이 일치하는 핸들러를 찾는다.
+  1. BeanNameUrl HandlerMapping
+     - 핸들러의 Bean이름과 url을 비교하여 핸들러를 찾는다.
+     - 빈 이름에 ANT패턴(*, **, ? 등)을 사용한다.
+- Handler Adapter
+  0. RequestMapping HandlerAdapter
+     - @RequestMapping 어노테이션을 사용하는 클래스, 메소드를 대상으로 지원
+  1. HttpRequest HandlerAdapter
+     - HttpRequestHandler인터페이스를 상속받는 클래스를 대상으로 지원
+  2. SimpleController HandlerAdapter
+     - Controller인터페이스를 상속받는 클래스를 대상으로 지원
 
 </details>
 
@@ -706,6 +773,39 @@
 
 -----------------------
 
+### WAS의 Connector
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- <img width="785" alt="image" src="https://user-images.githubusercontent.com/57162257/184608853-19e188ac-f704-487f-bf5a-1ee312a4575c.png">
+- 클라이언트의 요청을 받으면 socket을 받아 HttpServletRequest와 HttpServletResponse를 생성하는 역할.
+- BIO Connector와 NIO Connector가 있다.
+- 공통적인 역할
+  - <img width="767" alt="image" src="https://user-images.githubusercontent.com/57162257/184609233-707a5d49-b555-4e11-8062-7360cf136165.png">
+  - EndPoint에서 port listener를 통해 socket connection을 얻는다.
+  - Socket connection에서 데이터 패킷을 파싱한다.
+  - 파싱한 데이터 패킷을 Adapter에서 HttpServletRequest로 변환하여 서블릿 컨테이너에 보낸다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### NIO Connector & BIO Connector
 
 <details>
@@ -717,13 +817,78 @@
 
 -----------------------
 
-- 
+- BIO Connector
+  - <img width="761" alt="image" src="https://user-images.githubusercontent.com/57162257/184616009-656241e3-a922-46aa-a751-71808694810e.png">
+  - 하나의 요청당 하나의 thread를 할당하여 connection이 종료될때까지 사용하는 Blocking 방식
+  - 요청당 하나의 thread가 할당되어 요청과 스레드가 1대1 매칭이 되기 때문에 thread 부족현상이 발생할 수 있다.
+  - 구성
+    - <img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/184611484-30320797-b417-454f-a6ad-c7dc29cd813b.png">
+    - Http11Protocol
+      - JIoEndPoint
+        - Accepter
+          - port listener를 통해 socket을 얻는다.
+
+        - Worker
+          - Worker thread pool에서 accepter에거 받은 socket을 처리하기 위해 idle 상태인 worker thread를 꺼내온다.
+          - 처리할 worker thread가 없다면 accepter는 block된다
+
+      - Http11ConnectionHandler
+        - Http11Processor를 가지고 있다.
+
+    - Mapper
+      - http요청에 맞는 서블릿에 바인딩 시켜주는 역할
+
+    - CoyoteAdapter
+      - 소켓의 http요청을 HttpServletRequest객체로 변환
+
+  - 처리
+    1. Accepter에서 port listener를 통해 소켓을 얻는다.
+    2. 소켓에 Worker에서 worker thread를 할당해준다.
+    3. worker에서 소켓을 처리하기 위해 Http11ConnectionHandler에서 Htt11Processor를 가져온다.
+    4. CoyoteAdapter에서 소켓을 HttpServletRequest로 변환하고 서블릿을 호출한다.
+
+- NIO Connector
+  - <img width="736" alt="image" src="https://user-images.githubusercontent.com/57162257/184616040-c3af4798-4554-497e-9234-62ed796d4145.png">
+  - BIO Connector와 다르게 Poller라는 특수한 스레드를 사용해서 데이터를 읽을수 있는 상태의 소켓만 worker thread에 할당된다.
+  - 요청과 worker thread가 1대1 매칭이 되지 않기 때문에 thread개수보다 더 많은 요청을 받을 수 있다.
+  - 구성
+    - <img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/184613618-768f017e-c74b-4b26-b1b2-c4aea83d54a4.png">
+    - Http11NIO Protocol
+      - NIO EndPoint
+        - Accepter
+          - port listener를 통해 소켓을 얻는다.
+          - 소켓(socket connection) -> NIO Channel object -> Poller Event object 로 캡슐화한다.
+          - Poller Event를 Poller Event Queue에 저장
+
+        - Poller
+          - Poller Event Queue에 저장된 Poller Event를 Nio Channel로 풀어주고 Selector에 Nio Channel을 저장한다.
+
+        - Worker
+          - 읽을 수 있는 NIO Channel에 worker thread을 할당한다.
+          - NIO Channel의 소켓을 Socket Proccessor로 캡슐화한다.
+
+      - Http11ConnectionHandler
+        - Http11Processor
+
+    - Mapper
+    - CoyoteAdapter
+      - 소켓의 http요청을 HttpServletRequest로 변환하여 서블릿을 호출한다.
+
+  - 처리
+    1. Accepter에서 소켓을 얻고 소켓 -> NIO Channel -> Poller Event로 순서대로 캡슐화 한 후 Poller Event Queue에 저장한다.
+    2. Poller 스레드가 Poller Event Queue에 저장된 Poller Event를 꺼내서 NIO Channel을 Selector에 저장한다.
+    3. 저장된 NIO Channel 중 데이터를 읽을 수 있는 것을 Poller가 NIO Channel에 Worker Thread를 할당한다.
+    4. Worker Thread에서 NIO Channel을 Socket Processor로 변경하고 Http11ConnectionHandler에서 Http11Processor를 가져온다.
+    5. CoyoteAdapter에서 소켓의 http요청에 대해서 HttpServletRequest을 생성하고 서블릿을 호출한다.
+
 
 </details>
 
 -----------------------
 
 <br>
+
+
 
 
 
@@ -742,7 +907,48 @@
 
 -----------------------
 
-- 
+- Servlet 3.0 이전
+
+  - 서블릿 컨테이너에서의 요청과 서블릿에서의 처리가 1대1 매칭이기 때문에 서블릿의 요청이 끝날때까지 요청 스레드가 idle 상태로 유지된다.
+  - 스레드 부족현상 발생
+
+- Servlet 3.0 (Async - Blocking)
+
+  - <img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/184616344-ae9e77e2-ef69-4970-b247-f883e2c8c531.png">
+
+  - 비동기 처리를 추가해 서블릿 컨테이너의 요청 스레드와 서블릿의 처리 스레드를 분리하였다.
+
+  - 처리
+
+    1. 서블릿 컨테이너의 요청 스레드가 서블릿 호출시 HttpServletRequest의 startAsnyc()를 호출해 AsyncContext를 선언한다.
+
+    2. AsyncConext를 통해 요청 처리 스레드가 생성되고 요청을 처리한다.
+    3. 처리 스레드가 실행되는동안 요청 스레드는 반환되지만 클라이언트와의 요청은 끊어지지 않는다.
+    4. 처리 스레드가 완료되면 HttpServletResponse에 결과를 넣고 반환 후 요청 스레드를 종료한다.
+    5. 서블릿 컨테이너가 결과를 반환하고 클라이언트와의 요청을 끊는다.
+
+  - 문제점
+
+    - Async Servlet으로 서블릿 컨테이너의 요청 스레드와 서블릿의 처리 스레드는 분리가 되었다. 하지만 처리가 오래걸리는 요청이 들어오면 서블릿 컨테이너와 서블릿 사이의 I/O가 오래걸리게 되고 Block이 발생한다.
+
+- Servlet 3.1 (Asnyc - Non Blocking)
+
+  - 읽는 데이터가 크다면 서블릿에 읽기 위한 대기로 인해 Block이 생기고 쓰는 데이터가 크다면 서블릿 컨테이너에서 쓰기 위한 대기로 Block이 생기게 된다.
+  - Read / Write Listener를 통해 3.0의 Blocking 문제를 해결할 수 있다.
+  - Read Listener
+    - onDataAvailable
+      - 컨테이너가 서블릿이 읽을 데이터가 있다면 호출한다.
+      - 호출시 ServletInputStream.isReady()가 false로 선언되고 blocking없이 데이터를 읽을 수 있을때 true로 변경한 후 데이터를 읽는다.
+
+    - onAllDataRead
+      - 서블릿이 데이터를 blocking없이 읽을 수 있을 때 호출된다.
+      - 내부적으로 Writer Listener를 호출.
+
+  - Writer Listener
+    - onWritePossible
+      - 컨테이너가 쓸 데이터가 있는 즉시 호출한다.
+      - 호출 시 ServletOutputStream.isReady()가 false로 선언되고 컨테이너 스레드는 스레드 풀에 반납했다가 blocking없이 데이터를 쓸 수 있을때 true로 변경되면 요청 스레드를 다시 할당 받아 결과를 반환한다.
+
 
 </details>
 
