@@ -194,7 +194,7 @@
   + ex) 자동차는 변하기 쉬운 구체적인 타이어에 의존하면 안된다.
     + 타이어 종류에는 스노우타이어, 일반 타이어, 광폭타이어 등이 있어서 타이어가 변경될 때마다 자동차에 영향을 준다.
     + 자동차는 구체적인 타이어가 아닌 추상화된 타이어에 의존하여 타이어가 변경되어도 자동차가 영향을 받지 않아야 한다.
-    + <img src="/Users/flab1/Library/Application Support/typora-user-images/image-20220728232039710.png" width="50%">
+    + <img width="426" alt="image" src="https://user-images.githubusercontent.com/57162257/185022337-b9fbcde6-c136-4dd5-bd01-2ee639b099a5.png">
 
 
 </details>
