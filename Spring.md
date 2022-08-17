@@ -1627,7 +1627,83 @@
 
 -----------------------
 
-- 
+- JPQL의 기능적 특성으로 인해 조회 쿼리가 1개가 아닌 연관 엔티티의 개수 N개만큼 조회쿼리가 발생하는 문제
+- Fetch.EAGER
+  - findById() 쿼리 메소드 사용시 연관 엔티티를 join 하여 조회한다. **(N+1 발생 x)**
+  - 그 외의 쿼리 메소드 사용시 연관 엔티티를 따로 조회한다. **(N+1 발생)**
+
+- Fetch.LAZY
+  - 모든 쿼리 메소드 사용시 연관 엔티티를 따로 조회한다. **(N+1 발생)**
+
+- N+1 발생 이유
+  - 쿼리 메소드 사용시 조회 주체에 대한 select 쿼리가 생성되기 때문에 연관 엔티티 조회를 하기 위한 select 쿼리가 추가 생성되기 때문이다.
+
+- Lazy 로딩에서 findById()시 N+1 발생 이유
+  - Lazy로딩시 연관 엔티티는 프록시 객체로 감싸져있기 때문에 연관 엔티티를 조회하기 위한 select 쿼리가 추가 생성되기 때문이다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### N+1 해결
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- Fetch Join `(inner join)`
+  - Fetch Join이란, 조회 주체가 되는 엔티티만 영속성화하는 것이 아닌 연관 엔티티도 조회하여 영속화해주는 JPQL의 특별한 쿼리.
+  - JPQL에 fetch join쿼리를 사용한다.
+    - @Query("select o from owner o join fetch o.cats")
+
+- EntityGraph `(outer join)`
+  - 쿼리 메소드에 @EntityGraph 어노테이션을 사용하여 attributePaths 속성에 연관 엔티티 필드 값을 작성하고 join 없이 JPQL을 작성한다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### JPQL에서 일반 Join 과 Fetch Join의 차이
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 일반 Join
+  - JPQL에 일반 join문을 작성하면 join 쿼리는 발생한다. 하지만 JPQL은 조회 주체 엔티티만 영속화 해주기 때문에 join 대상 엔티티에 대한 영속 관리까지는 관여하지 않는다.
+  - 그렇기 때문에 join문을 생성했더라 하더라도 그래프탐색으로 불러오게 되면 LazyInitialization Exception 발생
+
+- Fetch Join
+  - 조회 주체 엔티티와 fetch join 대상 엔티티까지 join하여 영속화 해주는 JPQL의 특별한 쿼리
+
 
 </details>
 
@@ -1652,7 +1728,25 @@
 
 -----------------------
 
-- 
+- Pagination
+  - Fetch join으로 Pagination 요청시 limit 쿼리를 생성하지 않고 memory에 데이터를 불러와 페이징 처리를 하여 OutOfMemory가 발생할 수 있다.
+  - 해결 방법
+    - @BatchSize
+      - toMany 연관관계에 @BatchSize어노테이션을 선언한다.
+      - 조회 주체에 쿼리에 limit쿼리가 생성되고 조회 주체의 id를 size만큼 묶어서 연관관계를 조회한다.
+      - BatchSize사용시 추가 쿼리 생성은 불가피 하지만 in 쿼리로 모든 연관관계를 불러오는 것보다는 효율적인 성능을 제공해주기 때문에 성능 개선이 도움이 된다.
+      - 하지만 BatchSize와 Fetch join을 함께 사용하면 Fetch Join의 우선순위가 높기 때문에 BatchSize가 무시되고 InMemory 이슈가 발생한다.
+
+- Miltiple Collection Join
+  - 엔티티에 2개 이상의 ToMany 연관관계를 fetch join으로 조회시 `MultipleBagFetch Exception`이 발생한다.
+  - 해결 방법
+    - Set
+      - ToMany 연관관계 자료형을 Set으로 선언하면 복잡한 중복문제를 해결해주어 MultipleBagFetch Exception문제를 해결할 수 있다.
+      - 하지만 Set자료형도 fetch join으로 Pagination 요청시 In Memory 이슈가 발생한다.
+
+    - @BatchSize
+      - BatchSize시 MultipleBagFetch Exception을 해결하고 Pagination의 InMemory도 해결할 수 있다.
+
 
 </details>
 
@@ -1666,7 +1760,7 @@
 
 -----------------------
 
-### OneToMany fetch join 페이지네이션 성능 이슈
+### BatchSize로 Pagination과 MultipleBagFetchException을 모두 해결할 수 있으니 Fetch Join은 사용하지 않아도 되는가?
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -1677,7 +1771,9 @@
 
 -----------------------
 
-- 
+- BatchSize는 N+1문제를 최대한 in 쿼리로 최소한의 성능을 제공하기 때문에 최선을 방법이 아니다.
+- ToOne 연관관계에서는 fetch join으로 한번의 쿼리로 처리한다.
+- ToMany 연관관계에서는 여러 Collections 중 데이터가 가장 많은 쪽에 Fetch join을 사용하고 나머지는 BatchSize를 통해 성능을 보장한다.
 
 </details>
 
@@ -1702,7 +1798,10 @@
 
 -----------------------
 
-- 
+- 2개 이상의 List자료형의 연관관계를 fetch join으로 조회하려고 할때 발생하는 이슈
+- 2개 이상의 List를 fetch join으로 불러왔을 때 데이터베이스 ROW의 중복 문제로 인해 매핑을 할수 없게 된다.
+- Set자료형으로 ROW의 복잡한 중복 문제를 해결하거나 BatchSize를 통해 연관관계를 따로 조회하여 중복 문제를 해결한다.
+- <img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/185199179-eb44fad5-659e-4de2-b883-20f14a20a770.png">
 
 </details>
 
@@ -1790,7 +1889,11 @@
 
 -----------------------
 
-- 
+- OneToOne 연관관계에서 주인 엔티티에서 연관 엔티티를 호출시 Lazy 로딩이 작동한다, 하지만 주인이 아닌 엔티티에서 주인 엔티티를 호출시 Lazy 로딩이 작동하지 않는다.
+- Lazy로딩은 프록시를 통해 작동하는데 프록시는 null을 감쌀수 없다.
+- 그렇기 때문에 주인 엔티티에서는 fk가 있기 때문에 null여부를 확인해서 Lazy로딩이 작동된다. 하지만 주인이 아닌 엔티티는 fk가 존재하지 않기 때문에 주인 엔티티에서 fk의 null여부를 확인해야하기 때문에 주인 엔티티를 조회해야해서 Lazy가 아닌 Eager로딩으로 작동되는것이다.
+- ToMany 연관관계에서는 연관관계를 Collections로 관리하기 때문에 null을 갖지 않아 주인이 아닌쪽에서도 Lazy로딩이 가능하다.
+- <img width="636" alt="image" src="https://user-images.githubusercontent.com/57162257/185201836-6496c92e-87b8-4a46-928a-ede44ff5e35b.png">
 
 </details>
 
@@ -1815,7 +1918,30 @@
 
 -----------------------
 
-- 
+- 객체의 상속관계를 데이터베이스에 적용시키기 위한 작업
+- 상속 매핑
+  - 부모 클래스에 @Inheritence 어노테이션을 선언해 상속관계를 명시한다.
+  - 종류
+    - Singel Table 전략
+      - JPA의 default 상속 매핑 전략
+      - 모든 자식 테이블의 데이터를 하나의 테이블에 저장
+      - dtype을 통해 자식 클래스를 구분한다.
+
+    - Joined 전략
+      - 부모 클래스와 자식 클래스를 join하여 객체를 조합하는 전략
+      - 부모 클래스와 자식 클래스가 분리되어 생성되며 부모 클래스와 자식 클래스의 id가 동일하여 PK이자 FK가 된다.
+      - @Inheritence(strategy = InheritanceType.JOINED)
+
+- MapperSuperClass
+  - 테이블의 상속관계 매핑보다는 공통 데이터가 필요한 경우 사용
+  - 부모 클래스를 직접 사용하지 않기 때문에 추상 클래스로 사용하며 Entity가 아니기 때문에 데이터베이스에 생성되지 않는다.
+  - <img width="256" alt="image" src="https://user-images.githubusercontent.com/57162257/185202078-12d847d1-eee9-4120-9117-18a598ca8e3f.png">
+
+- 임베디드 타입
+  - 공통 속성을 정의한 클래스에 @Embaddable을 선언하고 공통 속성을 사용하는 클래스의 필드에 @Embadded를 선언한다.
+  - MapperSuperClass와 마찬가지로 상속관계를 매핑하는 것이 아닌 공통 데이터를 엔티티에 추가한다.
+  - 엔티티가 아니기 때문에 데이터베이스에 생성되지 않는다.
+
 
 </details>
 
