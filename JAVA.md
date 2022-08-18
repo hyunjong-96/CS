@@ -763,6 +763,7 @@
 + 특징
   + Parallel 메소드를 제공해서 병렬처리가 가능하다 (내부적으로 스레드풀을 만들어 병렬 처리)
   + 불변성(Immutable)이기때문에 원본 데이터를 읽기만 할 뿐 변경하지 않는다.
+    + 데이터를 변경할 수 없으며 변경하기 위해서는 재할당을 해야한다.
   + 내부반복으로 작업을 수행하며 최종 연산 후 stream이 닫히므로 일회성 API이다.
 
 
@@ -854,6 +855,10 @@
 
 + 기본 타입인 데이터를 객체로 감싸주는 클래스로, 기본타입 데이터를 Wrapper Class 인스턴스의 value로 저장.
 + 동등성 비교를 통해 value를 비교해야 한다.
++ 사용 이유
+  + Collection에서 객체를 사용하기때문이다.
+  + 멀티 스레드에서 동기화 처리를 위해 객체가 필요하다.
+
 
 
 </details>
@@ -1019,7 +1024,7 @@
 + Collection의 toArray()메소드를 오버로딩하는 메소드가 추가되어 원하는 타입의 배열을 선택하여 반환.
   + <img width="514" alt="image" src="https://user-images.githubusercontent.com/57162257/181903621-6b0527b5-cddf-4fd7-b6e0-46202a0bd9ac.png">
 
-+ 람다 표현식에서 지역변수에 var 사용이 가능해져 stream 요소의 변경이 가능해졌다.
++ 람다 표현식에서 지역변수에 var 사용이 가능해져 컴파일 시 타입을 추론하게 하고 타입에 사용할수 있는 어노테이션을 사용할 수 있다..
   + <img width="561" alt="image" src="https://user-images.githubusercontent.com/57162257/181903638-846ceb6c-6dc8-4294-bcc9-519a7b696492.png">
 
 + javac로 컴파일하지 않고 java파일을 수행할 수 있다.
