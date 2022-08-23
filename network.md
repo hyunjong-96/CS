@@ -153,7 +153,7 @@
     + UDP보다는 속도가 느리다.
 
 + UDP (User Datagram Protocol)
-  + 데이터를 데이터그램 단위로 처리하는 프로토콜
+  + 패킷을 데이터그램 단위로 처리하는 프로토콜
     + <img width="513" alt="image" src="https://user-images.githubusercontent.com/57162257/185790984-b5c4cb5b-8650-4f50-bd73-7495a05efafb.png">
     + 데이터그램 : 독립적인 관계를 가지는 패킷
 
@@ -354,11 +354,13 @@
 -----------------------
 
 + HTTP
-  + www를 사용하는 클라이언트와 서버 사이에서 이루어지는 요청을 처리하는 프로토콜
+  + 인터넷에서 클라이언트와 서버 사이에서 이루어지는 요청을 처리하는 프로토콜
   + TCP (HTTP/1, HTTP/2), UDP (HTTP/3)을 사용하며 80번 포트를 사용한다.
 
 + HTTPS
-  + HTTP에 SSL과 TSL로 보안이 추가된 프로토콜
+  + HTTP에 SSL과 TSL로 보안이 추가된 프로토콜로 데이터를 암호화해 보안을 통해 신뢰성 있는 요청을 하기 위함
+    - SSL과 TSL 암호화는 전송 계층과 응용 계층 사이에서 발생한다.
+    - SSL (Secure Sockey Layer) : 전송된 데이터를 암호화하여 보안을 유지하는 표준 기술
   + 개인키 암호화와 공개키 암호화 방식을 사용한다.
     - 공개키 암호화
       - 공개키로 암호화하고 개인키로 복호화한다.
@@ -467,7 +469,6 @@
 
 -----------------------
 
-+ asd
 + Multiplexd Stream
   + <img width="965" alt="image" src="https://user-images.githubusercontent.com/57162257/185845962-4b009599-2c65-451a-a7ba-2284bfd704f8.png">
   + Connection당 여러개의 메시지를 주고 받을 수 있으며 순서에 상관없이 Stream으로 주고 받는다.
@@ -664,8 +665,8 @@
 -----------------------
 
 + 외부 인증 프로그램을 이용해서 접근 위임을 위한 개방형 표준 프로토콜.
-+ 인증 : 사용자 신원 확인
-+ 인가 : 기능 접근 권한 확인
++ 인증 (authentication) : 사용자 신원 확인
++ 인가 (authorization) : 기능 접근 권한 확인
 
 
 
@@ -693,11 +694,11 @@
 -----------------------
 
 + URI (Uniform Resource Identifier)
-  + 인터넷 자원을 식별하기 위한 값.
+  + 인터넷 자원을 식별하기 위한 주소
 
 + URL (Uniform Resource Locator)
-  + 웹에서 자원에 대한 구체적인 위치.
-  + URL은 URI에서 표준을 만들어 특정 자원을 어떻게 가져와야하는지 명시하는 것.
+  + 자원에 대한 구체적인 위치.
+  + 특정 자원을 어떻게 가져와야하는지 명시하는 것.
   + test.com/food/salad.png : test.com 도메인에서 food 디렉터리에 있는 salad.png 이미지를 가져오는것.
 
 + URN (Uniform Resource Name)
