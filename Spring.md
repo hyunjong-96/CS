@@ -1302,7 +1302,7 @@
 
 - JDBC Template
   - Spring JDBC의 접근 방법 중 하나, Spring JDBC의 데이터베이스 접근을 편리하게 해준다.
-  - JDBC Tempalte는 Spring JDBC가 데이터베이스 접근을 할수 있게 JDBC의 과정을 대신 처리해주고 `DataSource 설정, 쿼리 작성, 결과 처리` 만 해주면 된다.
+  - JDBC Template는 Spring JDBC가 데이터베이스 접근을 할수 있게 JDBC의 과정을 대신 처리해주고 `DataSource 설정, 쿼리 작성, 결과 처리` 만 해주면 된다.
 - DataSource
   - 데이터베이스의 connection 정보를 가지고 있다.
   - 빈으로 등록하여 JDBC Template에 정보를 제공한다.
@@ -1346,7 +1346,7 @@
     - 쿼리 메소드를 통해 SQL을 작성하지 않아 비즈니스 로직에 집중할 수 있다.
 
   - 유지보수
-    - SQL은 DBMS마다 쿼리가 다르기 때문에 수정시 쿼리도 수정해야한다. 하지만 JPA는 엔티티를 수정해야할때 엔티티 수정 부분만 수정하면 SQL을 자동으로 생성한다.
+    - SQL은 엔티티 수정시 쿼리도 수정해야한다. 하지만 JPA는 엔티티를 수정해야할때 엔티티 수정 부분만 수정하면 SQL을 자동으로 생성한다.
 
   - 성능 최적화 기능
     - 1차캐시
@@ -1357,14 +1357,14 @@
     - DBMS 기술에 종속되지 않는다.
 
   - 패러다임 불일치 해결
-    - 데이터베이스는 데이터 중심 설계, 객체는 객체 중심 설계이기 때문에 데이터베이스는 연관관계 참조 등의 개념을 이해하지 못한다.
+    - 데이터베이스는 데이터 중심 설계, 객체는 객체 중심 설계이기 때문에 데이터베이스는 상속, 연관관계 참조 등의 개념을 이해하지 못한다.
+    - 상속
+      - JPA는 자식 테이블을 저장하면 자동으로 부모 테이블과 자식 테이블을 저장하는 쿼리를 만들어 주어 저장된다.
     - 연관관계
       - 연관관계를 참조하는 객체를 저장하면 참조를 외래키로 변경하여 저장해준다.
-
     - 그래프 탐색
       - SQL 조회시 join을 통한 쿼리를 요청하지 않으면 연관관계를 조회할 수 없다.
       - 지연로딩을 통해 연관관계 객체를 참조할 수 있다.
-
     - 비교
       - 데이터베이스는 PK로 Row를 비교하고 객체는 동일성(==)과 동등성(equals())으로 비교한다.
       - SQL로 같은 조건을 조회하면 동일성을 보장하지 않는다.
@@ -1395,11 +1395,39 @@
 -----------------------
 
 - JPA의 구현체 중 하나로 Hibernate 내부의 JDBC API를 통해 데이터베이스와 통신한다.
-- JPA에서 쿼리 메소드를 사용했을때 쿼리를 사용하지 않는게 아니라 Hibernate 내부에서 HQL 라는 강력한 쿼리를 사용한다.
 - HQL (Hibernate Query Language)
   - HQL은 SQL과 유사하지만 SQL에서 지원하지 않는 페이지네이션과 같은 고급 기능을 제공한다.
   - HQL은 객체지향으로써 객체지향의 강점을 누릴 수 있다.
   - HQL은 쿼리 결과를 객체로 변환해준다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### JPQL (Java Persistence Query Language)
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- JPA에서 제공하는 쿼리 방법
+- 객체지향 쿼리로써 엔티티 객체를 대상으로 쿼리하며 SQL을 추상화 하기 때문에 데이터베이스에 종속되지 않는다.
+- `select m from Membe`
 
 
 </details>
@@ -1548,7 +1576,7 @@
 - 종류
   - CascadeType.ALL : 모든 영속상태 변경을 연관 엔티티도 적용받는다.
   - CascadeType.PERSIST : 엔티티가 영속상태로 변경될때 연관 엔티티도 영속상태로 변경된다.
-  - CascadeType.MERGE : 병합
+  - CascadeType.MERGE : 엔티티가 준영속에서 영속상태로 변할때 연관 엔티티도 함께 영속상태가 된다.
   - CascadeType.REMOVE : 엔티티가 삭제될때 연관 엔티티도 삭제.
     - 부모 엔티티가 삭제되면 자식 엔티티(주인)도 함께 삭제
     - 영속성 전이를 적용하지 않으면 자식 엔티티부터 차례로 삭제해야한다.
@@ -1559,8 +1587,8 @@
   - @OneToMany, @OneToOne에서만 사용할 수 있다.
 
 - REMOVE와 Orphan
-  - REMOVE는 부모 엔티티가 삭제되었을때 자식 엔티티는 삭제되지않는다. 하지만 부모 엔티티에서 참조 삭제를 해도 자식 엔티티에는 영향을 미치지 않는다.
-  - Orpahn은 부모 엔티티에서 자식 엔티티의 참조를 제거했을때 자식 엔티티는 삭제된다.
+  - REMOVE는 부모 엔티티가 삭제되었을때 자식 엔티티는 삭제된다. 하지만 부모 엔티티에서 참조 삭제를 해도 자식 엔티티에는 영향을 미치지 않는다.
+  - Orpahn은 부모 엔티티가 삭제되면 자식 엔티티도 삭제된다. 부모 엔티티에서 자식 엔티티의 참조를 제거했을때 자식 엔티티는 삭제된다.
 
 
 </details>
@@ -1586,19 +1614,21 @@
 
 -----------------------
 
-- 트랜잭션 경계에서 이미 실행중인 트랜잭션이 있을때 어떻게 동작할지 결정하는 것
+- 트랜잭션 경계에서 트랜잭션의 유무에 따라 어떻게 동작할지 결정하는 것
+
+- @Transactional을 선언한 클래스, 메소드에 명시하면, 해당 메소드가 호출될 때 지정된 트랜잭션이 수행된다.
 
 - 종류
 
-  | 종류         | 진행중인 트랜잭션 유                     | 진행중인 트랜잭션 무 | 특징                                                     |
-  | ------------ | ---------------------------------------- | -------------------- | -------------------------------------------------------- |
-  | REQURED      | 해당 트랜잭션 사용                       | 새로운 트랜잭션 생성 | 하나의 트랜잭션으로 실행되기 때문에 하나가 잘못되면 롤백 |
-  | MANDATORY    | 해당 트랜잭션 사용                       | 예외 발생            |                                                          |
-  | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 |                                                          |
-  | SUPPORTS     | 해당 트랜잭션 사용                       | 트랜잭션 없이 실행   |                                                          |
-  | NOT_SUPPORT  | 해당 트랜잭션 보류                       | 트랜잭션 없이 진행   |                                                          |
-  | NEVER        | 예외 발생                                | 트랜잭션 없이 진행   |                                                          |
-  | NESTED       | 중첩 트랜잭션 생성                       | 새로운 트랜잭션 생성 |                                                          |
+  | 종류         | 진행중인 트랜잭션 유                     | 진행중인 트랜잭션 무 | 특징                                           |
+  | ------------ | ---------------------------------------- | -------------------- | ---------------------------------------------- |
+  | REQURED      | 해당 트랜잭션 사용                       | 새로운 트랜잭션 생성 | Default, 예외 발생시 롤백되고, 호출한곳도 롤백 |
+  | MANDATORY    | 해당 트랜잭션 사용                       | 예외 발생            |                                                |
+  | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 | 두개의 트랜잭션 독립                           |
+  | SUPPORTS     | 해당 트랜잭션 사용                       | 트랜잭션 없이 실행   |                                                |
+  | NOT_SUPPORT  | 해당 트랜잭션 보류                       | 트랜잭션 없이 진행   |                                                |
+  | NEVER        | 예외 발생                                | 트랜잭션 없이 진행   |                                                |
+  | NESTED       | 중첩 트랜잭션 생성                       | 새로운 트랜잭션 생성 | Save point 지점까지 롤백가능, oracle에서 가능  |
 
   
 
@@ -1991,7 +2021,94 @@
 
 -----------------------
 
-- 
+- 자바 애플리케이션에서 인증, 인가를 처리하고 보호 기능을 제공하는 프레임워크
+- spring security 사용시 애플리케이션에 보호 기능을 자체적으로 구현할 필요없고 다양한 기능을 확장할 수 있습니다.
+- 인증 프로세스
+  - <img width="752" alt="image" src="https://user-images.githubusercontent.com/57162257/186381962-e2e43a71-5d8a-4eab-80e4-7e55bad238ce.png">
+    1. Security Filter에서 요청을 가로챈다.
+    2. UsernamePasswordAuthenticationFilter를 통해 UsernamePasswrodAuthenticationToken 이라는 인증용 토큰을 생성한다.
+    3. AuthenticationManger의 구현체인 ProviderManager에게 UsernamePasswordAuthenticationToken을 전달한다.
+    4. ProviderManager는 AuthenticationProvider에게 UsernamePasswordAuthenticationToken을 전달한다.
+    5. AuthenticationProvider는 실제 데이터베이스에서 사용자 정보를 가져오는 UserDetailsService에게 사용자 정보를 넘겨준다.
+    6. UserDetailsService는 사용자 정보를 데이터베이스에서 찾아 UserDetails로 반환한다.
+    7. AuthenticationProvider는 UserDetails로 사용자 정보를 비교한다.
+    8. 인증이 완료되면 인증 정보를 담은 Authentication을 반환한다.
+       - Authentication은 principle (사용자 식별), cridential (암호), authorities (권한) 으로 구성되어있다.
+    9. Authentication을 AuthenticationFilter로 반환하고 SecurityContext에 Authentication을 저장한다.
+       - SecurityContext는 세션영역으로써 인증된 Authentication을 SecurityContext에 저장한다는 것은 Spring Security가 세션방식으로 인증 방식을 사용한다는 뜻이다.
+
+- Security Filter
+  - <img width="493" alt="image" src="https://user-images.githubusercontent.com/57162257/186384232-91963797-5547-46ee-9c6b-0cec4fdf23b2.png">
+  - <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/186384310-6ada9459-8671-480c-a25d-ccae60eeb199.png">
+  - Security Filter는 서블릿 컨테이너의 Filter와 마찬가지로 DispatcherServlet 요청 전에 사용되는 필터이다. 하지만 Security Filter는 서블릿 컨테이너의 Filter Chain에 DelegatingFilterProxy를 끼워넣고 SecurityFilterChain이 Filter의 역할을 위임하도록 한다.
+  - 방법
+    - WebSeucrityConfiguerAdapter라는 Filter chain을 구성하는 클래스를 상속받는 Configure클래스를 생성하여 configure() 를 오버라이딩하여 filter chain을 구성할 수 있다.
+
+  - 종류
+    - UsernamePasswordFilter : login요청을 감시하며 인증과정 진행.
+    - SessionManagementFilter : 요청이 시작된 이후 인증된 사용자인지 확인하고, 인증된 사용자인 경우 동시 로그인 확인 등을 확인한다.
+    - ExceptionTranslationFilter : filter chain내에서 발생되는 모든 예외를 처리한다.
+      - AuthenticationEntryPoint, AccessDeniedHandler
+    - 등 ...
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Spring Security JWT
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- JWT 적용 이유
+  - 일반 Spring Security는 저장된 Authentication을 SecurityContext에서 별도의 스레드로 세션이 유지되도록 관리하여 상대적으로 무겁고 유지비용이 발생하게 됩니다.  그렇기 때문에 별도의 유지 비용과 공간이 필요없는 JWT를 사용하여 인증, 인가 처리를 Security에 적용한다.
+
+- 적용 방법
+  - JWT 생성, 유효 검사, 인증 처리를 위한 JwtTokenProvider 클래스 구현하였고 이를 사용하기 위해 JwtAuthenticationFilter를 구현하였습니다. 그리고 기존 인증 필터인 UsernamePasswordFilter의 이전에 수행할 수 있도록 security filter chain 설정을 통해 인증 구현.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Filter 와 Security Filter
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- Filter와 Security Filter는 동일하게 Servlet에 요청되기전에 실행되어 요청 확인 및 가공한다.
+- 일반 Filter는 서블릿 컨테이너에 직접 등록하여 사용하는 필터이고 Security Filter는 DelegatingFilterProxy가 서블릿 컨테이너의 Filter에 등록되어 Filter 작업을 Security FilterChain으로 위임하여 실행되는 필터.
 
 </details>
 
