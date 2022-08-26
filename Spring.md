@@ -1760,20 +1760,24 @@
 
 - Pagination
   - Fetch join으로 Pagination 요청시 limit 쿼리를 생성하지 않고 memory에 데이터를 불러와 페이징 처리를 하여 OutOfMemory가 발생할 수 있다.
+  - 발생 이유
+    - Join으로 limit조회시 주최 엔티티의 개수 * 연관 엔티티의 개수만큼의 row가 발생되고 JPA가 원하는대로의 페이징은 SQL에서 처리를 하지 못하여 모든 데이터를 메모리로 불러온다음에 JPA가 메모리에서 페이징을 처리하게 발생하는 것.
   - 해결 방법
     - @BatchSize
       - toMany 연관관계에 @BatchSize어노테이션을 선언한다.
-      - 조회 주체에 쿼리에 limit쿼리가 생성되고 조회 주체의 id를 size만큼 묶어서 연관관계를 조회한다.
+      - 조회 주체에 쿼리에 limit쿼리가 생성되고 조회 주체의 id를 In절에 size만큼 묶어서 연관관계를 조회한다.
       - BatchSize사용시 추가 쿼리 생성은 불가피 하지만 in 쿼리로 모든 연관관계를 불러오는 것보다는 효율적인 성능을 제공해주기 때문에 성능 개선이 도움이 된다.
       - 하지만 BatchSize와 Fetch join을 함께 사용하면 Fetch Join의 우선순위가 높기 때문에 BatchSize가 무시되고 InMemory 이슈가 발생한다.
-
+  
 - Miltiple Collection Join
   - 엔티티에 2개 이상의 ToMany 연관관계를 fetch join으로 조회시 `MultipleBagFetch Exception`이 발생한다.
+  - 발생 이유
+    - 2개 이상의 ToMany 연관관계를 fetch join으로 조회할때 SQL결과에서 ROW의 중복 문제로 인해 매핑을 할 수 없기 때문이다.
   - 해결 방법
     - Set
       - ToMany 연관관계 자료형을 Set으로 선언하면 복잡한 중복문제를 해결해주어 MultipleBagFetch Exception문제를 해결할 수 있다.
       - 하지만 Set자료형도 fetch join으로 Pagination 요청시 In Memory 이슈가 발생한다.
-
+  
     - @BatchSize
       - BatchSize시 MultipleBagFetch Exception을 해결하고 Pagination의 InMemory도 해결할 수 있다.
 
@@ -1801,7 +1805,7 @@
 
 -----------------------
 
-- BatchSize는 N+1문제를 최대한 in 쿼리로 최소한의 성능을 제공하기 때문에 최선을 방법이 아니다.
+- BatchSize는 N+1문제를 최대한 in 쿼리로 최소한의 성능을 제공하기 때문에 최선의 방법이 아니다.
 - ToOne 연관관계에서는 fetch join으로 한번의 쿼리로 처리한다.
 - ToMany 연관관계에서는 여러 Collections 중 데이터가 가장 많은 쪽에 Fetch join을 사용하고 나머지는 BatchSize를 통해 성능을 보장한다.
 
@@ -1817,7 +1821,7 @@
 
 -----------------------
 
-### MultipleBagFetchException
+### MultipleBagFetch Exception
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -1856,7 +1860,7 @@
 
 -----------------------
 
-- AOP 기술로 만들어진 어노테이션
+- 데이터베이스와 연결하여 데이터를 다루기 위해 필요한 EntityManger생성이나 commit(), rollback, 예외처리 등의 공통된 작업을 처리해야하기 때문에 AOP 기술로 만들어진 어노테이션
 - 매서드에 @Transational을 적용하게 되면 클래스가 빈으로 등록될 때 해당 메소드만 트랜잭션 처리가 되도록 오버라이딩된 프록시 객체가 빈으로 등록된다.
 - 클래스에 @Transactional을 적용하게 되면 클래스가 빈으로 등록될 때 전체 메소드가 트랜잭션 처리되도록 오버라이딩 되된 프록시 객체가 빈으로 등록된다.
 - 주의사항
@@ -1972,31 +1976,6 @@
   - MapperSuperClass와 마찬가지로 상속관계를 매핑하는 것이 아닌 공통 데이터를 엔티티에 추가한다.
   - 엔티티가 아니기 때문에 데이터베이스에 생성되지 않는다.
 
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### Spring Batch
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
-
------------------------
-
-- 
 
 </details>
 
