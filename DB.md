@@ -754,14 +754,17 @@
     + 보장성 : MQ에 저장되면 모든 메시지는 consumer에게 전달 보장
 
 + Kafka
+  + <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/187015445-92ffd37c-dee0-40d1-ae7a-acef0cf0ab8f.png">
   + 메시지 큐 기반의 분산 메시징 시스템
   +  Publisher와 Subscriber를 중심으로 생성자가 원하는 메시지를 배포 패턴으로 진행
   + 메시지를 Subscriber가 가져가도 broker에서는 메시지를 저장하고 있어 다시 사용가능
   + 메시지를 병렬 처리하기 때문에 대용량 데이터 처리 가능
-
+  
 + RabbitMQ
+  + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/187015453-9dfe5634-e563-4906-93fa-3e868acb2e36.png">
   + AMQP 프로토콜을 구현한 메시지 브로커
-  + 브로커 중심적 형태로 publisher와 consumer간 보장된 메시지 전달에 초점
+    + AMQP : client와 broker간 메시지를 주고받기 위한 프로토콜
+  + 브로커 중심적 형태로 producer와 consumer간 보장된 메시지 전달에 초점
   + 메시지를 consumer에게 전달하면 삭제
   + 데이터 처리보다 Manage UI를 제공해 관리나 다양한 기능 제공을 위한 서비스 구축에 사용
 
