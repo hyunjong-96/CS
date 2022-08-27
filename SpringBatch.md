@@ -57,25 +57,21 @@
 - Job이 실행되면 해당 Job에 대한 작업 데이터인 Batch 메타 데이터가 생성되는데, Batch 메타 데이터를 저장할 메타 데이터 테이블이 필수로 필요하다.
 - 필요 이유
   - 작업에 대한 실행 정보, 실패 여부 등을 저장하여 모니터링 하기 위함이다.
-
 - 종류
   - Batch Job Instance
     - Job의 생성정보
     - job Id, version, job name, job key (job 중복 수행 체크를 위한 고유 키, job name과 파라미터로 키값이 결정됨)
-
   - Batch Job Execution
     - Job의 실행 정보
     - Job의 실행 상태, Job 정보 등..
-
+    - Batch status : 실행 상태
+    - Exit status : 실행  후 실행 결과 상태
   - Batch Job Execution Param
     - Job에서 사용된 파라미터 정보
-
   - Batch Job Execution Context
     - Job Execution와 1대1로 매핑되어있으며 작업 중 사용되는 정보 저장
-
   - Batch Step Execution
     - Job에서 실행되는 step 실행 정보를 담는 테이블
-
   - Batch Step Execution Context
     - step에서 사용되는 모든 정보를 기록하는 테이블
 
@@ -463,6 +459,46 @@
 
 
 
+<br>
+
+-----------------------
+
+### batch 작업 실패시
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+
+-----------------------
+
+- 작업 실패시 skip이나 retry를 통해 예외를 처리한다.
+- skip과 retry는 step설정에서 faultTolerant()를 선언하고 사용한다.
+- skip
+  - skip() : 선언 예외 발생시 건너뜀
+  - skipLimit() : 선언 횟수만큼의 skip 발생시 job 실패 처리
+  - noSkip() : 해당 예외 발생시 예외 발생
+
+- retry
+  - retry() : 선언 예외 발생시 재시도
+  - retryLimit() : 선언 횟수만큼 retry 발생시 실패처리
+  - noRetry() : 해당 예외발생시 예외 발생
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+
+
 ---
 
 ## 면접 예상 질문
@@ -489,7 +525,7 @@
 
 -----------------------
 
-- 
+- 많은 데이터를 처리하는데 사용 빈도가 적으며 정해진 시간에 특정 데이터를 처리하기를 원했고, 애플리케이션 서비스에 영향을 받지 않도록 하기 위해 spring batch를 사용했습니다.
 
 </details>
 
@@ -515,7 +551,7 @@
 
 -----------------------
 
-- 
+- jobparameter를 통해 제어되지 않는 코드를 사용하지 않고 파라미터에 따라 동일한 요청을 여러번 요청해도 동일한 결과를 반환하게 하여 멱등성을 유지합니다.
 
 </details>
 
@@ -541,7 +577,14 @@
 
 -----------------------
 
-- 
+- batch job을 수행하게 되면 메타 데이터라는 수행 정보가 생성되는데 이를 저장하고 모니터링 하기 위해서는 메타 데이터 테이블이 필요합니다
+- Batch job instance : job의 생성 정보
+- batch job execution : job의 실행 정보
+- batch job execution param : job에 사용된 파라미터 정보
+- batch job context : job의 전체 실행 정보
+- batch step execution : step의 실행 정보
+- batch step context : step의 전체 실행 정보
+- 가 있습니다.
 
 </details>
 
@@ -567,7 +610,7 @@
 
 -----------------------
 
-- 
+- 배치가 실패하면 메타 데이터 테이블로 발생 원인을 파악하고 해당 예외에 대해서 skip을 통해 건너뛰거나 retry를 통해 예외를 건너뛰어 문제를 처리합니다.
 
 </details>
 
@@ -593,7 +636,17 @@
 
 -----------------------
 
-- 
+- <img width="400" alt="image" src="https://user-images.githubusercontent.com/57162257/187017434-7fa2ef03-fa85-4c59-8d60-af850f0ae8b7.png">
+- Multi-thread-step
+  - **단일 Step**을 수행할 때, 해당 Step 내의 **각 Chunk를 별도의 여러 쓰레드에서 실행** 하는 방법
+  - spring batch는 단일 스레드로 작업이 순차적으로 이루어지지만 ThreadPoolTaskExecutor를 통해 multi thread를 사용하면 step의 chunk 별로 작업이 병렬적으로 처리되어 빠르게 처리할 수 있습니다.
+    하지만 병렬적으로 처리되기 때문에 하나의 chunk가 성공했다고 이전의 chunk가 성공적으로 완료되었다는 보장이 없습니다.
+    그리고 멀티스레드를 사용할때 ItemReader나 ItemWriter는 thread-safe를 보장하는 구현체를 사용해야합니다. (pagingItemReader은 모두 보장)
+    만약 thread-safe하지 않는 구현체를 사용할때는 SynchronizedItemStreamReade나 SynchronizedItemStreamWriterr로 감싸줘서 사용해주어야 합니다. (read와 write메소드가 synchronized로 선언되어있음)
+
+- 파티셔닝
+  - ㅇㅅㅇ
+
 
 </details>
 
@@ -619,7 +672,7 @@
 
 -----------------------
 
-- 
+- spring batch에서는 대용량 데이터를 다루기 때문에 하나의 트랜잭션으로 대량의 데이터를 관리하기에는 어려움이 있기 때문입닌다.
 
 </details>
 
@@ -645,7 +698,9 @@
 
 -----------------------
 
-- 
+- tasklet과 reader,processor, writer는 둘 다 step에서 작업을 수행하는 역할을 합니다.
+- Tasklet은 하나의 덩어리에서 작업을 처리하기 때문에 비교적 쉽고 가벼운 로직에서 사용할 수 있습니다. 하지만 대용량 데이터를 한번에 처리하거나 여러 덩어리로 나누어 처리하기 쉽지 않습니다.
+- reader, processor, writer는 chunk 기반으로 대량의 데이터를 역할을 나누어 작업 수행하기 때문에 Tasklet보다 효율과 유지비용이 좋습니다. 하지만 reader, processor, writer의 이해관계를 정확히 파악해야합니다.
 
 </details>
 
@@ -671,7 +726,9 @@
 
 -----------------------
 
-- 
+- cursor와 paging기반은 데이터를 읽어올때 방식으로 나뉘어집니다 cursor 기반은 하나의 connection으로 연결하여 stream으로 하나씩 데이터를 읽어오는 방법이고 paging은 limit와 offset을 사용하여 한번에 가져올 데이터를 나누어 읽어오는 방법입니다.
+  cursor는 데이터를 순차적으로 읽어오기 때문에 정렬없이 데이터를 읽어 올수 있지만 하나의 connection으로 데이터를 가져오기 때문에 batch작업이 크다면 timeout으로 connection이 종료될 수 있습니다.
+  paging은 하나의 paging쿼리마다 connection으로 데이터를 가져오기 때문에 대량의 데이터를 관리하기 효율적입니다. 하지만 각 paging 쿼리는 개별적으로 발생하기 때문에 정렬을 해주지 않으면 독자적으로 정렬 기준을 잡아 중복 데이터를 읽어올 수 있습니다.
 
 </details>
 
@@ -697,7 +754,8 @@
 
 -----------------------
 
-- 
+- 젠킨슨으로 자동 배포하여 사용할 수 있고 jobparameter를 쉽게 적용하여 멱등성을 유지할 수 있습니다.
+- 저는 특정 시간에 수행되는 배치 작업을 구현했기 때문에 cron으로 job을 스케줄링하고 배포하여 nohup으로 실행 시켰습니다.
 
 </details>
 
@@ -723,7 +781,7 @@
 
 -----------------------
 
-- 
+- 제니퍼..?
 
 </details>
 
