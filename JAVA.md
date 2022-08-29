@@ -469,10 +469,10 @@
 -----------------------
 
 + char 
-  + 1개의 문자만 저장하는 원시타입
+  + 1개의 문자만 저장하는 타입
 
 + String
-  + 문자열 주소를 저장하는 참조타입
+  + 문자열 주소를 저장하는 타입
 
 + char는 원시타입이기 때문에 동일성 비교(==)가 가능하지만 String은 참조타입이기 때문에 동일성 비교시 참조 주소를 비교하기 때문에 같은 value를 비교하기 위해서는 동등성 비교(equals())를 해야한다.
 
@@ -976,6 +976,12 @@
 
 + 구현해야할 추상 메소드 하나만 정의된 인터페이스로써 Java 8에 등장.
 + `@FunctionalInterface` 어노테이션을 통해 객체 선언 및 오버라이딩 필요없이 람다식을 통해 코드를 간결하게 작성하는 것이 가능하다.
++ 사용
+  + Collections.sort( [List타입] , [`Comparator 함수형 인터페이스`])
+  + PriorityQueue<>( [`Comparator 함수형 인터페이스`] )
+  + Stream().map(( [`Function 함수형 인터페이스`] ))
+  + mapToInt( [`ToIntFunction 함수형 인터페이스`] )
+
 
 <img width="527" alt="image" src="https://user-images.githubusercontent.com/57162257/181903333-5a02e0ee-c515-4eb0-a6be-4cee1cf7da2f.png">
 
@@ -1032,14 +1038,10 @@
   + isBlank() : 문자열이 비어있거나 공백일 때 true
   + strip : 문자열 앞 뒤의 공백 제거
   + repeat(n) : 문자열을 n번 반복하여 반환
-
 + Collection의 toArray()메소드를 오버로딩하는 메소드가 추가되어 원하는 타입의 배열을 선택하여 반환.
   + <img width="514" alt="image" src="https://user-images.githubusercontent.com/57162257/181903621-6b0527b5-cddf-4fd7-b6e0-46202a0bd9ac.png">
-
 + 람다 표현식에서 지역변수에 var 사용이 가능해져 컴파일 시 타입을 추론하게 하고 타입에 사용할수 있는 어노테이션을 사용할 수 있다..
   + <img width="561" alt="image" src="https://user-images.githubusercontent.com/57162257/181903638-846ceb6c-6dc8-4294-bcc9-519a7b696492.png">
-
-+ javac로 컴파일하지 않고 java파일을 수행할 수 있다.
 
 </details>
 
@@ -1204,6 +1206,46 @@
 
 + 멀티스레딩을 수행할 클래스는 Thread 클래스를 상속받아 run() 함수를 오버라이딩하여 로직을 수행한다.
 + 멀티스레딩을 수행할 클래스는 Runnable 인터페이스를 상속받아 run()을 구현하여 Thread 생성자의 인수로 넘긴다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Error & Exception
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ Error
+  + 시스템에 비정상적인 상황이 발생한 경우
+  + 런타임 시에 발생하며 예측이 불가능하고 처리할 수 없다.
+  + 종류 : StackOverFlow, OutOfMemory
+
++ Exception
+  + 입력받은 데이터 처리가 불가능하거나 잘못된 참조가 발생한 경우
+  + Checked Exception
+    + RuntimeException을 상속받지 않는 Exception으로, 컴파일 시점에 발생하고 반드시 예외를 처리해주어야하는 예외
+    + 종류 : IOException, SQLException
+
+  + UnChecked Exception
+    + RuntimeException을 상속받는 Exception으로, 런타임 시점에 발생하고 명시적으로 예외처리를 하지 않아도 되는 예외
+    + 종류 : NullPointException, IndexOutBoundException
+
+  + spring에서의 트랜잭션 처리 설정 중 RuntimeException시 롤백을 수행하는 옵션이 있어서 UnCheckedException에서는 롤백이 수행된다고 오해를 하지만, 어떤 예외든 개발자가 필요에 따라 예외처리를 해주고 특정 기술을 제어하는 것이다.
 
 
 </details>
