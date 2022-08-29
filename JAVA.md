@@ -41,8 +41,18 @@
 
 + 컴파일 언어
   + 고급언어(코드)를 컴파일러를 통해 기계어로 번역하여 프로그램을 실행하는 언어
-
+  + 장점
+    + 번역된 코드를 실행만 시키면 되기 때문에 실행 속도가 빠르다.
+  + 단점
+    + 작성된 코드를 전체 번역하기 때문에 컴파일 시간이 오래걸린다.
 + 인터프리터 언어
+  + 코드의 번역과 실행이 동시에 이루어지는 언어
+  + 장점
+    + 번역과 실행이 동시에 일어나기 때문에 수정 후 바로 실행가능하다.
+
+  + 단점
+    + 번역과 실행이 동시에 일어나기 때문에 실행속도가 느리다.
+
 + 자바는 컴파일 언어이자 인터프리터 언어
   + 자바는 자바코드를 자바 컴파일러(javac)를 통해 바이트코드로 변환(컴파일 언어 특징)하고 바이트코드가 JVM에 로드되어 인터프리터를 통해 바이트코드를 기계어로 번역(인터프리터 언어 특징)하여 명령을 수행한다.
 
@@ -111,7 +121,7 @@
 + 다형성(Polymorphism)
   + 하나의 객체가 여러 가지 타입을 가질 수 있는 것
   + 오버라이딩(Overriding) : 자식 클래스가 부모 클래스의 메소드를 입맛대로 변경해서 구현하는 것
-  + 오버로딩(Overloading). : 부모 클래스의 같은 이름의 메소드를 사용해도 매개변수나 데이터 타입을 다른 형태로 재구성 하는 것.
+  + 오버로딩(Overloading). : 같은 이름의 메소드를 사용해도 매개변수나 데이터 타입을 다른 형태로 재구성 하는 것.
 
 + 캡슐화(Encapsulation)
   + 객체가 하나의 목적을 위해 필드와 메소드를 하나의 캡슐로 묶은 것.
@@ -219,7 +229,7 @@
 -----------------------
 
 + 절차지향 프로그래밍 
-  + 실행하고자 하는 절차를 정하고 순차적으로 프로그래밍 하는 방법
+  + 문제를 해결하기 위해 순차적으로 프로그래밍 하는 방법
   + 빠르게 구현할 수 있지만 절차가 정해져있기 때문에 유지보수가 어렵다.
 
 + 객체지향 프로그래밍
@@ -405,6 +415,16 @@
 -----------------------
 
 + 사용되지 않는 Heap영역의 객체를 메모리 해제하여 메모리를 관리하는 역할
++ GC 종류
+  + Serial GC : 하나의 스레드로 GC 수행
+  + Parallel GC : java 8의 default GC, 여러 스레드로 GC 수행
+  + G1 GC : java 9의 default GC, Heap을 여러 영역으로 나누어 GC 수행
+    - <img width="304" alt="image" src="https://user-images.githubusercontent.com/57162257/187113600-2594d63f-9214-4cf4-835e-814379d7f7fb.png">
+    - young, old generation 영역을 명확하게 구분하는 전통적 heap과 다르게 eden, survivor, old, unused등의 작은 region으로 나누어져있다.
+    - 장점 
+      - young, old영역을 전체 탐색하는 것이 아닌, 특정 영역에 있는 Garbage를 제거함으로써 처리 속도가 빠르고 빠르게 빈 공간을 확보하기 때문에 GC의 빈도도 낮아진다.
+    - 단점
+      - Major, minor GC가 발생해도 공간이 부족한 경우 싱글 스레드로 Full GC가 발생하여 GC 처리 속도가 느리다.
 + GC 알고리즘
   + Reference Count
     + 객체를 참조하는 개수를 나타내는 reference count가 0이라면 GC의 대상이되는 알고리즘
@@ -412,27 +432,19 @@
 
   + Mark and Sweep
     + root에서 부터 해당 객체에 접근가능한 객체는 `Mark`, 접근이 불가능한 객체는 GC의 대상이되어 삭제(`Sweep`)
-
 + GC 동작과정
   1. Young Generation의 Eden영역이 포화상태가 된다.
   2. Stop the World 발생 후 Mark and Sweep 실행(Minor GC)
   3. 살아남은 객체는 survival 0영역에 저장된다.
-  4. survival 1영역이 포화되면 Minor GC 실행
+  4. survival 0영역이 포화되면 Minor GC 실행
   5. 살아남은 횟수 age가 일정 횟수가 된다면 Old Generation 영역에 저장된다.
   6. Old Generation이 포화상태가 되면 Major GC발생.
-+ GC 종류
-  + Serial GC : 하나의 스레드로 GC 수행
-  + Parallel GC : java 8의 default GC, 여러 스레드로 GC 수행
-  + G1 GC : java 9의 default GC, Heap을 여러 영역(Young Generation, Old Generation)으로 나누어 GC 수행
-    + 통상적으로 객체의 생명주기는 짧기 때문에 대부분 Young Generation영역에 존재한다. 그렇기 때문에 GC 탐색 범위를 최소화 하기 위함이다.
-
 + 장단점
   + 장점 : 메모리 누수 방지, 해제된 메모리 접근 방지
   + 단점 : GC가 언제발생할지 모름
-
 + 주의 사항
-  + Major GC는 Minor GC보다 실행시간이 훨씬 오래걸리며 Stop the World로 인해 실시간 프로그램에서 크리티컬한 이슈가 발생할 수 있다.
-  + GC 모니터링을 통해 코드를 리펙토링하거나 GC튜닝을 하여 GC를 처리하도록 한다.
+  + Major GC(Full GC)는 Minor GC보다 실행시간이 훨씬 오래걸리며 GC실행시 발생하는 Stop the World로 인해 실시간 프로그램에서 크리티컬한 이슈가 발생할 수 있다.
+  + old영역으로 넘어가는 객체 수를 줄이기 위해 String보다는 StringBuilder나 StringBuffer를 사용하고 로그 수를 줄인다. 그리고 Old영역의 크기를 조절해서 Full GC의 빈도를 줄이고 GC수행 시간을 적게 하도록 잘 조절한다.
 
 
 </details>
