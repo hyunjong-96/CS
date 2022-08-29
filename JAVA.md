@@ -1230,6 +1230,7 @@
 
 -----------------------
 
++ <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/187188855-0ee27b26-7458-48d4-a77c-1c0851779910.png">
 + Error
   + 시스템에 비정상적인 상황이 발생한 경우
   + 런타임 시에 발생하며 예측이 불가능하고 처리할 수 없다.
