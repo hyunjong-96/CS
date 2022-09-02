@@ -559,7 +559,22 @@
 
 -----------------------
 
-+ 클래스나 메소드를 사용할때 데이터 타입을 외부에서 설정하는 것
++ 불변 개체란 생성된 후에도 내부 상태가 일정하게 유지되는 개체
++ String은 변수에 할당되면 참조를 업데이트하거나 내부 상태를 어떠한 상태로 변경할 수 없다.
++ 성능
+  + String을 string pool에 등록했을때 동일한 문자열을 새로 생성하는 것이 아닌 string pool에서 찾아 가져와 메모리 효율성을 높일 수 있다.
+  + 만약 immutable이 아닌 mutable이라면 string pool에 저장된 데이터가 변경되면 해당 heap영역의 데이터를 참조하는 변수들의 값도 변경된다.
+
++ 동기화
+  + 멀티 스레드 환경에서 String 여러 스레드에서 공유될 수 있는데, immutable하기 때문에 참조 값이 변경되는 것이 아닌 새로운 데이터를 생성하여 참조하기 때문에 멀티 스레드 환경에서도 thread-safe하게 사용할 수 있다.
+
++ 해시코드 캐싱
+  + String에서 해시코드는 참조 데이터를 한번만 해시코드로 변경하고 해시를 재사용한다.
+  + 그렇기 때문에 참조 데이터가 변경된다면 해시코드에 문제가 생길수 있다.
+  + 따라서 문자열로 해시 구현을 사용하는 컬렉션의 성능이 좋다.
+
++ 보안
+  + 특정 문자열에 대해서 보안 검사를 수행했을 때 만약 mutable하다면 다른 곳에서 참조 데이터를 변경할 수 있기 때문에 문제가 발생할 수 있다.
 
 
 </details>
@@ -1390,6 +1405,189 @@
 + static : JVM이 객체를 생성없이 main을 호출 할수 있기 위함
 + void : main함수가 JVM에 반환하는 것이 없음
 + main : 자바 프로그램 진입점
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 자료구조 특징 및 시간복잡도
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ List
+  + ArrayList
+    + 데이터를 순차적으로 저장하는 자료구조
+    + 인덱스를 가지고 있어 검색에 효율적이다
+    + 데이터 추가,삭제 시 복사가 일어나 성능 저하를 일으킴
+    + thread-safe 보장 안함
+    + 데이터 구조 : ArrayList
+    + 시간복잡도
+      + add : O(1)
+      + remove : O(n)
+      + get : O(1)
+      + contains : O(n)
+
+  + LinkedList
+    + 데이터의 이전 노드와 다음 노드의 상태만 알고 있는 자료구조
+    + 데이터 추가,삭제시 효율적이다.
+    + 인덱스 없이 순회하여 노드를 찾아야하기 때문에 느리다.
+    + 데이터 구조 : LinkedList
+    + 시간복잡도
+      + add : O(1)
+      + remove : O(1)
+      + get : O(n)
+      + contains : O(n)
+
++ Set
+  + HashSet
+    + 객체들을 순서를 보장하지 않고 저장하며 중복을 허용하지 않는다.
+    + null을 허용한다, thread-safe 보장 안함
+    + 데이터 구조 : Hash Table
+    + 시간복잡도
+      + add : O(1)
+      + remove : O(1)
+      + contains : O(1)
+
+  + LinkedHashSet
+    + 객체들의 순서를 보장하며 중복을 허용하지 않는다.
+    + null을 허용한다, thread-safe 보장 안함
+    + 데이터 구조 : Hash Table + LinkedList
+    + 시간복잡도
+      + add : O(1)
+      + remove : O(1)
+      + contains : O(1)
+
+  + TreeSet
+    + 객체 기준으로 정렬되며 중복을 허용하지 않는다.
+    + null을 허용하지 않는다. thread-safe 보장 안함
+    + 데이터 구조 : Red-black tree
+    + 시간복잡도
+      + add : O(1)
+      + remove : O(1)
+      + contains : O(1)
+
++ Map
+  + HashMap
+    + key,value 형식으로 순서에 상관없이 저장되며 null을 허용하며 thread-safe 보장 안함
+    + 데이터 구조
+    + 시간복잡도
+      + add : O(1)
+      + get : O(1)
+      + containsKey : O(1)
+
+  + LinkedHashMap
+    + key,value 형식으로 순서를 보장하며 저장되며 null을 허용하고 thread-safe 보장 안함
+    + 데이터 구조
+    + 시간복잡도
+      + add : O(1)
+      + get : O(1)
+      + containsKey : O(1)
+
+  + TreeMap
+    + Key,value 형식으로 객체 기준으로 정렬되며 null을 허용하지 않고 thread-safe 보장 안함
+    + 데이터 구조
+    + 시간복잡도
+      + add : O(logN)
+      + get : O(logN)
+      + containsKey : O(logN)
+
+  + ConcurrentHashMap
+    + Key,value 형식으로 쓰기 작업시에만 thread-safe보장, 읽기 작업에는 thread-safe 보장 안함
+    + null 허용하지 않음
+    + 데이터 구조
+    + 시간복잡도
+      + add : O(1)
+      + get : O(1)
+      + containsKey : O(1)
+
++ Queue
+  + PriorityQueue
+    + 일반적인 Queue구조로 FIFO를 가지면서 데이터의 우선순위를 매겨 우선순위가 높은 데이터먼저 나가는 자료구조
+    + null을 허용하지 않고 Thread-safe 보장 안함
+    + 시간복잡도
+      + offer : O(logN)
+      + poll : O(logN)
+      + remove : O(logN)
+      + remove(Object) : O(n)
+      + contains() : O(n)
+
+  + PriorityBlockingQueue
+    + 일반적인 Queue구조로 우선순위가 높은 데이터 먼저 나가는 자료구조
+    + null을 허용하지 않고 Thread-safe 보장
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Hash Table
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ Key,value 형태로 데이터를 저장하는 자료구조
++ key는 해시 함수를 통해 해시로 변경되어 value와 매칭되어 저장소에 저장된다.
+  + key를 해시로 변경함으로써 고정된 길이를 가지게 되어 공간 효율성 추구
+
++ 저장
+  + key를 해시로 변경하여 value와 매칭하여 저장한다
+  + 일반적으로 O(1)로 저장되지만 해시 충돌로 모든 value를 찾아봐야하는 경우 O(n)의 시간복잡도를 가진다.
+
++ 삭제
+  + key와 매칭되는 value를 찾아서 삭제한다.
+  + 일반적으로 O(1)로 삭제되지만 해시 충돌로 모든 value를 찾아봐야하는 경우 O(n)의 시간복잡도를 가진다.
+
++ 검색
+  + key와 매칭되는 value를 찾는다
+  + 일반적으로 O(1)로 검색되지만 해시 충돌로 모든 value를 찾아봐야하는 경우 O(n)의 시간복잡도를 가진다.
+
++ 해시 충돌
+  + 서로 다른 값이 같은 해시 값을 가지게 되는 것.
+  + 해결방법
+    + Chaning
+      + 해시 값이 충돌하게 되면 해당 값을 기존 값과 LinkedList를 이용해 연결한다.
+      + 장점
+        + 한정된 저장소를 효율적으로 사용할 수 있다.
+
+      + 단점
+        + 특정 해시에 쏠림 현상이 발생하여 검색 효율을 낮출수 있다.
+        + 외부 저장 공간을 사용한다.
+
+    + Open Addressing
+      + 해시 값이 충돌하게 되면 비어있는 해시를 찾아 데이터를 저장하는 방법
+      + 장점
+        + 다른 저장공간 없이 데이터 저장 및 처리가 가능하다
+
+      + 단점
+        + 해시 함수의 성능에 전체 해시테이블 성능이 좌우된다.
+
 
 </details>
 
