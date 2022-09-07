@@ -1438,11 +1438,12 @@
     + thread-safe 보장 안함
     + 데이터 구조 : ArrayList
     + 시간복잡도
-      + add : O(1)
+      + add : O(n)
+        + 배열 복사
       + remove : O(n)
+        + 배열 복사
       + get : O(1)
       + contains : O(n)
-
   + LinkedList
     + 데이터의 이전 노드와 다음 노드의 상태만 알고 있는 자료구조
     + 데이터 추가,삭제시 효율적이다.
@@ -1453,17 +1454,19 @@
       + remove : O(1)
       + get : O(n)
       + contains : O(n)
-
 + Set
   + HashSet
     + 객체들을 순서를 보장하지 않고 저장하며 중복을 허용하지 않는다.
     + null을 허용한다, thread-safe 보장 안함
+    + 저장을 목적으로하는 자료구조이기 때문에 get없다.
+      + iterator로 순환 탐색
+      + 내부적으로 hashMap으로 구현되어있고 key는 데이터의 해시, value는 더미값을 가지고 있어 map의 key를 get하는 것은 어렵다.
     + 데이터 구조 : Hash Table
     + 시간복잡도
       + add : O(1)
       + remove : O(1)
       + contains : O(1)
-
+        + 해시 충돌로 최악의 경우 O(N)
   + LinkedHashSet
     + 객체들의 순서를 보장하며 중복을 허용하지 않는다.
     + null을 허용한다, thread-safe 보장 안함
@@ -1472,61 +1475,62 @@
       + add : O(1)
       + remove : O(1)
       + contains : O(1)
-
+      + get : O(1)
   + TreeSet
-    + 객체 기준으로 정렬되며 중복을 허용하지 않는다.
-    + null을 허용하지 않는다. thread-safe 보장 안함
+    + 객체 기준으로 정렬되며 범위 검색에 효율적이다.
+      + 완전 이진 트리인 레드블랙 트리로 범위 탐색이 쉽도록 왼쪽노드는 작은값, 오른쪽노드는 큰값으로 정렬되어있기 때문
+      + Subset()으로 범위 탐색 가능
+    + 중복을 허용하지 않는다. null을 허용하지 않는다. thread-safe 보장 안함
     + 데이터 구조 : Red-black tree
     + 시간복잡도
-      + add : O(1)
-      + remove : O(1)
-      + contains : O(1)
-
+      + add : O(logN)
+      + remove : O(logN)
+      + contains : O(logN)
 + Map
   + HashMap
     + key,value 형식으로 순서에 상관없이 저장되며 null을 허용하며 thread-safe 보장 안함
-    + 데이터 구조
     + 시간복잡도
       + add : O(1)
       + get : O(1)
       + containsKey : O(1)
-
   + LinkedHashMap
     + key,value 형식으로 순서를 보장하며 저장되며 null을 허용하고 thread-safe 보장 안함
-    + 데이터 구조
     + 시간복잡도
       + add : O(1)
       + get : O(1)
       + containsKey : O(1)
-
   + TreeMap
-    + Key,value 형식으로 객체 기준으로 정렬되며 null을 허용하지 않고 thread-safe 보장 안함
-    + 데이터 구조
+    + Key,value 형식으로 key으로 정렬되며 null을 허용하지 않고 thread-safe 보장 안함
+    + hashMap은 탐색에 효율적이지만 TreeMap은 범위탐색과 정렬에 표과적이다.
+      + Submap()을 통해 범위 탐색이 가능하다.
     + 시간복잡도
       + add : O(logN)
       + get : O(logN)
       + containsKey : O(logN)
-
   + ConcurrentHashMap
     + Key,value 형식으로 쓰기 작업시에만 thread-safe보장, 읽기 작업에는 thread-safe 보장 안함
     + null 허용하지 않음
-    + 데이터 구조
     + 시간복잡도
       + add : O(1)
       + get : O(1)
       + containsKey : O(1)
-
+  + 기본적으로 Map의 구현체는 삽입과 탐색의 시간복잡도가 O(1)이게 된다. 하지만 해시 충돌로 인해 특정 해시에 데이터 쏠림이 발생하게 된다면 해당 해시에서 LinkedList로 선형탐색하여 데이터를 찾기때문에 O(n)이 발생할 수 있다.
 + Queue
   + PriorityQueue
-    + 일반적인 Queue구조로 FIFO를 가지면서 데이터의 우선순위를 매겨 우선순위가 높은 데이터먼저 나가는 자료구조
+    + 완전이진 트리인 Heap으로 구현된 자료구조로써 루트 노드에 가장 높은 우선순위의 데이터가 있다.
     + null을 허용하지 않고 Thread-safe 보장 안함
+    + 데이터 구조
+      + Heap
+        + 완전이진트리 자료구조
+        + 삽입 : 맨 끝노드에서 부터 비교하며 올라온다.
+        + 삭제 : 루트노드를 삭제하고 맨 끝노드를 루트노드로 이동시키고 변경하며 내려온다.
     + 시간복잡도
       + offer : O(logN)
       + poll : O(logN)
       + remove : O(logN)
-      + remove(Object) : O(n)
+      + remove(Object) : O(n) // ?
       + contains() : O(n)
-
+    
   + PriorityBlockingQueue
     + 일반적인 Queue구조로 우선순위가 높은 데이터 먼저 나가는 자료구조
     + null을 허용하지 않고 Thread-safe 보장
@@ -1590,6 +1594,200 @@
       + 단점
         + 해시 함수의 성능에 전체 해시테이블 성능이 좌우된다.
 
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 정렬
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ 선택 정렬
+
+  + 현재 위치에 들어갈 값을 찾아 정렬
+
+  + 최소 선택정렬시, 해당 위치부터 이후에 있는 모든 값을 비교하여 가장 작은 값과 해당 위치의 값과 변경하는 것이다.
+
+  + ```java
+    void selectSort(int[] arr){
+      int index = 0;
+      for(int i=0;i<arr.length;i++){
+    		for(int j=i+1;j<arr.length;j++){
+          if(arr[index] > arr[j]) index = j;
+        }
+        
+        int temp = arr[index];
+        arr[index] = arr[i];
+        arr[i] = temp;
+    	}
+    }
+    ```
+
+  + 
+
+  + 시간복잡도 : O(n^2)
+
+    + 각 위치에서 뒤에있는 값과 모두 비교하기 때문에 n^2의 시간복잡도가 발생한다.
+
+  + 공간복잡도 : O(n)
+
+    + 하나의 배열에서 진행된다.
+
++ 삽입 정렬
+
+  + 현재 위치에서 앞에 있는 값들과 비교하여 자신보다 큰 값과 작은값 사이에 삽입하여 정렬
+
+  + ```java
+    void insertSort(int[] arr){
+      for(int i=1;i<arr.length;i++){
+        int value = arr[i];
+        int index = i-1;
+        while(index>=0 && value < arr[index]){
+          arr[index+1] = arr[index];
+          index--;
+        }
+        arr[index+1] = value;
+      }
+    }
+    ```
+
+  + 시간복잡도 : O(n^2)
+
+  + 공간복잡도 : O(n)
+
++ 버블 정렬
+
+  + 두개의 요소를 비교하여 큰 값이 뒤로 가도록 변경해주면서 반복하는 정렬
+
+  + ```java
+    void bubbleSort(int[] arr){
+      for(int i=0;i<arr.length;i++){
+        for(int j=i;j<arr.length-1;j++){
+          if(arr[j]>arr[j+1]){
+            int temp = arr[j+1];
+            arr[j+1] = arr[j];
+            arr[j] = temp;
+          }
+        }
+      }
+    }
+    ```
+
+  + 시간복잡도 : O(n^2)
+
+  + 공간복잡도 : O(n)
+
++ 합병 정렬
+
+  + 더이상 나눌수 없는 크기 까지 나누고 (분할), 병합하는 과정에서 정렬하는 것 (병합)
+
+  + ```java
+    void mergeSort(int[] arr, int[] temp, int start, int end){
+      if(start < end){
+        int mid = (start+end)/2;
+        mergeSort(arr, temp, start, mid);
+        mergeSort(arr, temp, mid+1, end);
+        merge(arr, temp, start, mid, end);
+      }
+    }
+    
+    void merge(int[] arr, int[] temp, int start, int mid, int end){
+      //temp에 기존 값 저장
+      for(int i=start;i<=end;i++){
+        temp[i] = arr[i];
+      }
+      
+      int part1 = start;	//왼쪽 파티션 첫번째 포인터
+      int part2 = mid+1; 	//오른쪽 파티션 첫번쨰 포인터
+      int index = start; 	//크기 비교된 값을 temp의 어디에 저장할것이지
+      
+      //왼쪽 파티션이나 오른쪽 파티션 중 모든 값을 정렬에 쓸때까지 반복
+      while(part1 <= mid && part2 <= end){
+        //왼쪽 파티션의 값이 더 작은경우 arr에 왼쪽 파티션값을 넣어준다.
+        if(temp[part1] <= temp[part2]){
+          arr[index] = temp[part1];
+          part1++;
+        }else{
+          arr[index] = temp[part2];
+          part2++;
+        }
+        index++;
+        
+        //왼쪽 파티션이 큰 경우 해당 값을 arr에 넣어주기 위한 작업
+       	for(int i=0;i<=mid-part1;i++){
+          arr[index+i] = temp[part1+i];
+        }
+        //오른쪽 파티션은 이미 큰값으로 정렬되어 있는 상태이기 때문에 arr을 넣어주는 작업이 필요없다.
+      }
+    }
+    ```
+
+  + 시간복잡도 : O(nlogn)
+
+    + 배열을 나눌때 O(logn)이고 나누어진 배열에서 n개를 병합해야하기 때문에 nlogn
+
+  + 공간복잡도 : 추가적인 저장공간피 필요함
+
++ 퀵 정렬
+
+  + pivot을 배열의 중간값으로 선언하고 pivot을 중심으로 왼쪽에는 작은값, 오른쪽에는 큰값으로 이루어진 파티션을 만들어 각 파티션에서 pivot을 만들어 각 파티션으로 나누면서 정렬
+
+  + ```java
+    void quickSort(int[] arr, int start, int end){
+      int part2 = partition(arr, start, end);
+      
+      //왼쪽 파티션이 2개이상 남아있다면 왼쪽파티션에 대해퀵정렬 계속
+      if(start < part2-1){
+        quickSort(arr, start, part2-1);
+      }
+      //오른쪽 파티션이 2개이상 남아있다면 오른쪽파티션에 대해 퀵정렬 계속
+      if(part2 < end){
+        quickSort(arr, part2, end);
+      }
+    }
+    
+    int partition(int[] arr, int start, int end){
+       //피봇값 지정
+       int pivot = arr[(start+end)/2];
+      
+      while(start<=end){
+        //피봇값보다 큰 값을 찾을때까지 반복
+        while(arr[start]<pivot) start++;
+        //피봇값보다 작은 값을 찾을때까지 반복
+        while(arr[end]>pivot) end--;
+        //두 인덱스가 교차하지 않았다면 두 값 swap
+        if(start<=end){
+          int temp = arr[start];
+          arr[start] = arr[end];
+          arr[end] = temp;
+          start++;
+          end--;
+        }
+      }
+      //두 값이 교차했을때 start가 pivot을 포함한 pivot보다 큰 값들이 정렬된 파티션
+      //start는 해당 파티션의 시작 index이다.
+      return start;
+    }
+    ```
+
+  + 시간복잡도 : O(nlogn)
+
+    + 보통 : nlogn, 최악 : n^2(pivot으로 선택되는게 최소또는 최대값인 경우)
 
 </details>
 
