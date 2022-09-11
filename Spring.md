@@ -1666,7 +1666,7 @@
   | MANDATORY    | 해당 트랜잭션 사용                       | 예외 발생            |                                                              |
   | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 | 두개의 트랜잭션 독립                                         |
   | SUPPORTS     | 해당 트랜잭션 사용                       | 트랜잭션 없이 실행   | 엔티티 조회시 propagation은 supports와 read-only를 사용하는것이 성능적으로 좋다. |
-  | NOT_SUPPORT  | 해당 트랜잭션 보류                       | 트랜잭션 없이 진행   |                                                              |
+  | NOT_SUPPORT  | 해당 트랜잭션 보류                       | 트랜잭션 없이 진행   | Read-only를 사용할때 사용하면 성능적으로 좋다.               |
   | NEVER        | 예외 발생                                | 트랜잭션 없이 진행   |                                                              |
   | NESTED       | 중첩 트랜잭션 생성                       | 새로운 트랜잭션 생성 | 부모 트랜잭션이 롤백되면, 중첩 트랜잭션도 함께 영향을 받아 롤백된다.<br /> 중첩 트랜잭션이 롤백되면 부모 트랜잭션은 영향을 받지않고 커밋된다. |
 
@@ -2016,118 +2016,6 @@
   - MapperSuperClass와 마찬가지로 상속관계를 매핑하는 것이 아닌 공통 데이터를 엔티티에 추가한다.
   - 엔티티가 아니기 때문에 데이터베이스에 생성되지 않는다.
 
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### Spring Security
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
-
------------------------
-
-- 자바 애플리케이션에서 인증, 인가를 처리하고 보호 기능을 제공하는 프레임워크
-- spring security 사용시 애플리케이션에 보호 기능을 자체적으로 구현할 필요없고 다양한 기능을 확장할 수 있습니다.
-- 인증 프로세스
-  - <img width="752" alt="image" src="https://user-images.githubusercontent.com/57162257/186381962-e2e43a71-5d8a-4eab-80e4-7e55bad238ce.png">
-    1. Security Filter에서 요청을 가로챈다.
-    2. UsernamePasswordAuthenticationFilter를 통해 UsernamePasswrodAuthenticationToken 이라는 인증용 토큰을 생성한다.
-    3. AuthenticationManger의 구현체인 ProviderManager에게 UsernamePasswordAuthenticationToken을 전달한다.
-    4. ProviderManager는 AuthenticationProvider에게 UsernamePasswordAuthenticationToken을 전달한다.
-    5. AuthenticationProvider는 실제 데이터베이스에서 사용자 정보를 가져오는 UserDetailsService에게 사용자 정보를 넘겨준다.
-    6. UserDetailsService는 사용자 정보를 데이터베이스에서 찾아 UserDetails로 반환한다.
-    7. AuthenticationProvider는 UserDetails로 사용자 정보를 비교한다.
-    8. 인증이 완료되면 인증 정보를 담은 Authentication을 반환한다.
-       - Authentication은 principle (사용자 식별), cridential (암호), authorities (권한) 으로 구성되어있다.
-    9. Authentication을 AuthenticationFilter로 반환하고 SecurityContext에 Authentication을 저장한다.
-       - SecurityContext는 세션영역으로써 인증된 Authentication을 SecurityContext에 저장한다는 것은 Spring Security가 세션방식으로 인증 방식을 사용한다는 뜻이다.
-
-- Security Filter
-  - <img width="493" alt="image" src="https://user-images.githubusercontent.com/57162257/186384232-91963797-5547-46ee-9c6b-0cec4fdf23b2.png">
-  - <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/186384310-6ada9459-8671-480c-a25d-ccae60eeb199.png">
-  - Security Filter는 서블릿 컨테이너의 Filter와 마찬가지로 DispatcherServlet 요청 전에 사용되는 필터이다. 하지만 Security Filter는 서블릿 컨테이너의 Filter Chain에 DelegatingFilterProxy를 끼워넣고 SecurityFilterChain이 Filter의 역할을 위임하도록 한다.
-  - 방법
-    - WebSeucrityConfiguerAdapter라는 Filter chain을 구성하는 클래스를 상속받는 Configure클래스를 생성하여 configure() 를 오버라이딩하여 filter chain을 구성할 수 있다.
-
-  - 종류
-    - UsernamePasswordFilter : login요청을 감시하며 인증과정 진행.
-    - SessionManagementFilter : 요청이 시작된 이후 인증된 사용자인지 확인하고, 인증된 사용자인 경우 동시 로그인 확인 등을 확인한다.
-    - ExceptionTranslationFilter : filter chain내에서 발생되는 모든 예외를 처리한다.
-      - AuthenticationEntryPoint, AccessDeniedHandler
-    - 등 ...
-
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### Spring Security JWT
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
-
-
------------------------
-
-- JWT 적용 이유
-  - 일반 Spring Security는 저장된 Authentication을 SecurityContext에서 별도의 스레드로 세션이 유지되도록 관리하여 상대적으로 무겁고 유지비용이 발생하게 됩니다.  그렇기 때문에 별도의 유지 비용과 공간이 필요없는 JWT를 사용하여 인증, 인가 처리를 Security에 적용한다.
-
-- 적용 방법
-  - JWT 생성, 유효 검사, 인증 처리를 위한 JwtTokenProvider 클래스 구현하였고 이를 사용하기 위해 JwtAuthenticationFilter를 구현하였습니다. 그리고 기존 인증 필터인 UsernamePasswordFilter의 이전에 수행할 수 있도록 security filter chain 설정을 통해 인증 구현.
-
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### Filter 와 Security Filter
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
-
-
------------------------
-
-- Filter와 Security Filter는 동일하게 Servlet에 요청되기전에 실행되어 요청 확인 및 가공한다.
-- 일반 Filter는 서블릿 컨테이너에 직접 등록하여 사용하는 필터이고 Security Filter는 DelegatingFilterProxy가 서블릿 컨테이너의 Filter에 등록되어 Filter 작업을 Security FilterChain으로 위임하여 실행되는 필터.
 
 </details>
 
