@@ -164,27 +164,34 @@
 + 이상현상
   + 삽입 이상
     + 특정 데이터가 존재하지 않아 추가하고 싶은 데이터를 추가하지 못하는 현상
-
+    + 또는 불필요한 데이터를 함께 추가해야하는 현상
+    
   + 삭제 이상
     + 특정 데이터를 삭제할때 원치 않은 데이터도 삭제되는 현상
-
+  
   + 갱신 이상
     + 데이터를 수정했는데 같은 속성이지만 다른 값을 가지는 불일치성이 생기는 현상
-
+      + 데이터 정합성의 불일치
+  
 + 종류
   + 제 1정규화
     + 모든 속성값은 원자성을 갖는다.
 
   + 제 2정규화
     + 제 1정규화 + 완전 함수정 종속
-    + 완전 함수정 종속 : 기본키의 부분집합이 결정자이지 않는것
-
+    + 완전 함수적 종속 : 기본키의 부분집합이 결정자이지 않는것
+    + 완전 함수적 종속을 만족하지 않는 경우
+      + <img width="522" alt="image" src="https://user-images.githubusercontent.com/57162257/190955012-8b677625-7b6b-4996-925e-9cc4bf1afbd5.png">
+    
   + 제 3정규화
     + 제 2정규화 + 이행적 종속이 아닌것
     + 이행적 종속 : a->b, b->c 일때 a->c인것.
-
+      + <img width="336" alt="image" src="https://user-images.githubusercontent.com/57162257/190955096-c3338e96-8768-4db9-8f2f-17892b9d5020.png">
+    
   + BCNF
     + 제 3정규화 + 모든 결정자가 후보키
+    + 모든 결정자가 후보키가 아닌 경우
+      + <img width="406" alt="image" src="https://user-images.githubusercontent.com/57162257/190955207-b5bf4935-4e7c-4d44-b0ac-5bff61b53a6e.png">
 
 
 
@@ -217,7 +224,7 @@
   + 조회 쿼리가 간단해진다.
 
 + 단점
-  + 데이터의 삽입, 삭제, 수정의 비용이 비싸다
+  + 데이터의 수정, 삭제 비용이 비싸다
   + 데이터를 중복저장하여 더 많은 저장공간이 필요.
 
 
@@ -250,7 +257,7 @@
     + 트랜잭션의 결과는 모두 반영되거나 모두 반영되지 않아야한다.
 
   + 일관성 (Consistency)
-    + 트랜잭션의 결과고 데이터베이스의 상태가 모순되지 않아야한다.
+    + 트랜잭션의 결과로 데이터베이스의 상태가 모순되지 않아야한다.
 
   + 격리성 (Isolation)
     + 트랜잭션이 자원을 사용하고있다면 다른 트랜잭션의 접근을 제한하는것.
@@ -334,9 +341,10 @@
     + MySQL의 격리 수준
     + 데이터 변경시 이전 데이터를 트랜잭션 ID와 함께 Undo영역에 저장하고 변경된 데이터는 Record 영역에 저장한다.
       + 이러한 변경 방식을 MVCC (Multiple Version Concurrency Control)이라고 한다.
-
+        + Concurrency : 동시성
+      
     + 트랜잭션 ID를 통해 Repetable Read가 발생하지 않는다.
-
+    
   + Serializable
     + 읽기 작업과 쓰기 작업 모두 락을 걸어 다른 트랜잭션은 해당 자원에 접근할 수 없다
     + 일관성이 가장 높고 동시성이 가장 낮은 격리 수준
@@ -530,12 +538,14 @@
 
 + Redis
   + In Memory 데이터베이스로  key,value 형태로 데이터를 저장하는 NoSQL이다.
-  + 여러가지 자료구조, 싱글스레드, 복구 기능을 제공한다.
-  + 확장가능한 웹 애플리케이션 구축과 고급데이터 구조 사용시 사용한다.
-
+  + 여러가지 자료구조(String, LinkedList, Set, Sorted Set..), 싱글스레드를 제공하고 각 자료구조는 atomic critical section을 제공한다.
 + Memcached
   + In Memory 데이터베이스로 key,value 형태로 데이터를 저장하는 NoSQL이다.
-  + 멀티 스레드를 지원하며, 애플리케이션 속도를 높일때 사용한다.
+  + 시스템에서 사용되지 않는 일부 메모리를 활용할 수 있어서 성능 향상 가능
++ In Memory 데이터베이스란
+  + 메인 메모리에 데이터를 저장하여 디바이스 데이터베이스보다 더 빠르게 데이터를 가져오는 데이터베이스
+  + 데이터 베이스의 부하를 줄여 애플리케이션의 속도 개선을  위해 사용된다.
+
 
 
 
@@ -566,7 +576,8 @@
 + 역색인
   + 텍스트를 파싱해서 단어를 분리하여 검색어 사전에 저장한다.
   + 검색어 사전에는 단어별로 Document를 가리키고 있다.
-
+  + <img width="442" alt="image" src="https://user-images.githubusercontent.com/57162257/191022507-4fdc60bf-c064-4c49-b959-1924d587231d.png">
+  
 + 구조
   + Cluster
     + Elastic Search에서 가장 큰 시스템 단위
@@ -599,6 +610,10 @@
   + Rest Ful
     + 데이터 crud 작업은 http restful api를 사용한다.
     + SELECT = Get, Create = Put, UPDATE = Post, DELETE = Delete
+      + Put으로 저장할때는 index/type/id 로 id를 제어할 수 있다.
+      + Post로 저장할때는 index/type로 id 생성 제어를 넘긴다.
+    + 저장 : index / type / id
+    + 조건 조회 : index / _search ? age=80 등의 url search나 json파일에 쿼리를 작성해서 POST로 검색하는 방법이 있다.
 
 
 
