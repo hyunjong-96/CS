@@ -326,11 +326,9 @@
 + 동시에 여러 트랜잭션이 수행 될 때 각 트랜잭션이 얼마만큼의 고립성을 가지는지 나타내는 것
 + 사용 이유
   + 동시성과 일관성을 유지하기 위함으로써, 일관성이 너무 높으면 병목 현상이 발생하여 응답이 지연되고, 동시성이 너무 높으면 데이터가 꼬일 위험이 있게 된다. 동시성과 일관성을 적절히 맞추기 위해 사용하는 방법 중 하나가 트랜잭션 격리이다.
-
 + 종류
   + Read UnCommited
     + 데이터를 변경한 트랜잭션의 commit, rollback 여부 상관없이 트랜잭션에게 보여주는 격리성 수준
-
   + Read Commited
     - commit을 수행한 트랜잭션의 결과만 조회할 수 있는 격리 수준
     - orcle의 격리 수준
@@ -342,9 +340,10 @@
     + 데이터 변경시 이전 데이터를 트랜잭션 ID와 함께 Undo영역에 저장하고 변경된 데이터는 Record 영역에 저장한다.
       + 이러한 변경 방식을 MVCC (Multiple Version Concurrency Control)이라고 한다.
         + Concurrency : 동시성
-      
     + 트랜잭션 ID를 통해 Repetable Read가 발생하지 않는다.
-    
+    + InnoDB를 제외하고는 Repetable Read에서는 Pantom Read는 발생한다.
+      + InnoDB에서는 Consistent Read와 Next key Lock으로 팬텀 리드가 발생하지 않는다.
+      + mysql의 MyIAM엔진에서 테스트해보면 팬텀리드가 발생하지만 InnoDB에서 동일하게 수행하면 팬텀리드는 발생하지 않는다.
   + Serializable
     + 읽기 작업과 쓰기 작업 모두 락을 걸어 다른 트랜잭션은 해당 자원에 접근할 수 없다
     + 일관성이 가장 높고 동시성이 가장 낮은 격리 수준
@@ -378,16 +377,70 @@
   + 공유 락 (S- Lock)
     + 데이터를 읽을 때 사용되는 락.
     + S-Lock이 걸려있을때 S-Lock는 동시 접근이 가능하다. 하지만 L-Lcok은 접근이 불가능하다.
-    + SELECT
-
+    + SELECT for Share
   + 베타 락 (Exclusive - Lock)
     + 데이터를 변경 할 때 사용되는 락
     + X-Lock이 해제될 때까지 다른 트랜잭션은 해당 자원에 접근이 불가능하다.
     + SELECT for UPDATE, UPDATE, DELETE
-
+  + Gap Lock
+    + DB index record의 gap에 걸리는 락
+    + gap이란 index 중 데이터베이스에 실제 record가 없는 부분을 말한다.
+    + id = 13, id = 17이 있는 테이블 t가 있을때, index record에는 id<=12, 14 <= id <= 16, 18<=id 는 실제 존재하지 않는 record이므로 해당 범위를 gap이라고한다.
+    + 즉 gap lock이란 select for update와 같이 락을 걸어주는 조회쿼리시 **범위**를 사용하였을때, 실제 존재하지 않는 record에 대해 락을 걸어주어 다른 트랜잭션이 해당 gap lock이 걸려있는 레코드 부분에 있어 추가, 수정, 삭제를 못하도록 하는것이다.
+  + Next Key Lock
+    + Record Lock과 Gap Lock이 함께 사용되는 Lock으로 InnoDB에서 Phantom Read를 방지하기 위해 사용된다.
+    + 위에서 설명했듯이 조회한 범위 내에 존재하지 않는 index에 락을 걸어준다.
+    + 사실 gap lock에는 범위에 없는 index뿐만 아니라 앞 뒤 범위도 포함이 되어서 gap lock이 발생한다. (이래야 phantom read를 더 효율적으로 잡을 수 있다고 한다.)
+      + next key lock은 보조 인덱스를 사용하기 때문에 보조 인덱스를 만들어줘야 gap lock이 발생한다. 안그러면 테이블 전체에 락이 걸린다.
 + 락의 해제 타이밍
   + commit
   + rollback
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### MySQL의 Lock
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
++ MySQL은 기본적으로 Repeatable Read의 고립 수준을 가진다. 그리고 기본 엔진인 InnoDB는 MVCC를 사용한다.
++ MVCC란 Multi Version Concurency Control의 약자로써 트랜잭션을 지원하는 DBMS가 락을 사용하지 않고 일관된 읽기를 제공하는 것을 목적으로 제공하는 기술.
+  + 하나의 레코드에 대해 여러 버전의 레코드를 관리한다.
+  + InnDB는 언두 로그에 버전별 레코드를 저장한다.
+
++ 일관된 읽기 (Consistent Read)
+  + Read operation시 락을 걸지 않고 첫번째 Read operaion시점에 찍은 snapshot을 사용하여 row를 조회하게 된다.
+  + 그렇기 때문에 해당 record에 락이 걸려 있더라도 첫 read operation시점에 찍은 snapshot을 사용해 조회하여 락없이 사용할수 있게되어 동시성이 높아진다.
+
++ 격리성 수준
+  + Repeatable Read
+    + 트랜잭션이 첫 Read operation을 수행한 시점에 snapshot을 찍는다. 이후, read operation마다 해당 snapshot을 보기 때문에 다른 트랜잭션이 commit을 하여도 새로 commit된 데이터는 조회되지 않는다.
+    + update 시에는 다른 트랜잭션이 수정한 값이 적용되어 보이게된다. 이는 다른 트랜잭션에 의해 해당 데이터가 수정되었음에도 이전 snapshot을 사용하는 것은 정합성이 깨지기 때문에 row에 대한 consistent read를 초기화하고 최근 상태의 row를 보여주게 된다. (update한 row를 제외한 나머지 row는 모두 snapshot)
+
+  + Read Commited
+    + 첫 Read operation에서 찍은 snapshot만 사용하는 Repeatable Read와 달리, Read Commited는 Read operation을 수행할때마다 snapshot을 찍는다. 때문에 Read operation시점마다 새로 commit된 데이터가 보이게된다.
+
+  + Read UnCommited
+  + Serializable
+
 
 
 
