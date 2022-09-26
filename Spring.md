@@ -504,13 +504,12 @@
 - 여러 객체에서 공통으로 사용하는 기능(흩어진 관심사)을 구분함으로써 재사용성을 높여주는 프로그래밍 기법이다.
 - 공통으로 사용되는 기능을 모듈화하는 것을 `크로스 컷팅`이라고도 한다.
 - 주요 개념
+  - <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/192211595-533f3050-518b-475b-ae22-483824a20c1f.png">
   - Aspect 
     - 흩어진 관심사를 모듈화 한 것
     - Advice + Pointcut을 모듈화 한 것
-
   - Target
-    - aspect를 적용하는 곳 (클래스, 메서드)
-
+    - 어떤 대상에 부가적 기능을 부여할것인지 (클래스, 메서드)
   - Advice
     - 실질적으로 aspect가 어떤 일을 할것인지에 대한 부가기능을 담은 구현체
     - 실행 시점
@@ -519,15 +518,24 @@
       - @After-returning : 대상 메서드 정상 수행 후
       - @After-throwing : 대상 메서드 예외 발생 후
       - @Around : 대상 메서드의 수행 전/후
-
   - JoinPoint
-    - adviced 적용 지점
-
+    - 호출되는 모든 메소드 하나하나.
   - PointCut
-    - 복수의 JoinPoint를 하나로 묶은 것
+    - 실제 advice가 적용될 시점으로 JoinPoint중 필터링 되어 사용.
+    - 여러 JoinPoint중 advice를 적용시킬 JoinPoint
 
 - 특징
   - 스프링 빈에만 AOP 적용가능
+- AOP 적용방법
+  - 컴파일
+    - .java 파일에서 .class 바이트코드로 컴파일 될때 부가 기능을 적용
+
+  - 클래스 로드
+    - .class 바이트코드가 JVM으로 로드될떄 부가 기능을 적용
+
+  - 프록시
+    - Spring AOP에서 지원하는 적용방법으로 AOP가 적용된 메소드를 호출할 때 프록시 객체로 감싸서 해당 메소드가 호출될때 부가 기능을 수행하고 타겟 메소드를 호출하게 된다.
+
 
 
 </details>
@@ -565,6 +573,65 @@
     - 프록시 객체에서 선처리 후 타겟 메소드를 실행하기 때문에 내부에서 타겟 메소드 실행시 프록시가 적용되지 않고 메소드가 실행된다.
     - 해결방법은 실행 할 메소드를 다른 클래스로 빼서 프록시 처리 한 후 타겟 메소드를 호출한다
 
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Dynamic Proxy vs CGLib Proxy
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- 수동으로 프록시 패턴을 구현하게 된다면 인터페이스(DiscountService)와 구현체 객체(RateDiscountService)를 구현하게 된다. 그리고 프록시 패턴을 위해 프록시 객체(RateDiscountServiceProxy)는 인터페이스(DiscountService)를 상속받고 구현체를 사용하여 구현하게 된다.
+  하지만 이런 구현은 2개의 빈이 등록되게 된다(RateDiscountService, RateDiscountServiceProxy)
+
+  - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/192232905-5d985e94-0271-41eb-9ee4-f352a2fcf3c2.png">
+  - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/192232973-dedc7266-dd7e-4b1a-ab44-4d8e17d3f1da.png">
+
+- Dynamic Proxy
+
+  - Spring은 자동 프록시 생성기를 통해 직접 프록시 객체를 생성하는데, 프록시를 구현한 객체는 실제 구현체 빈을 프록시 객체가 감싸 빈으로 등록되기 때문에 1개의 빈만 등록되게 된다. (RateDiscountServiceProxy)
+  - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/192234376-309d4ebe-6c3b-456a-b05c-e29c45c1ce18.png">
+  - 하지만 다른 곳에서 구현 클래스를 의존하게 된다면 빈으로 등록되어있지않아 에러를 발생시킨다. 또한 Dynamic Proxy는 인터페이스 기반으로 프록시 객체를 생성하게 되는데, 인터페이스를 구현한 클래스가 없다면 프록시객체를 생성할 수 없다.
+  - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/192236404-fe90cd6a-0d61-40f3-86b4-63dfc17252ba.png">
+  - 한계점
+    - 프록시 객체를 실행하기 위해서는 반드시 인터페이스를 생성해야한다. (번거로움)
+    - 구현 클래스를 빈으로 등록할 수 없지만, 프록시 객체에서 사용하기 위해 구현 클래스를 생성해야한다. (번거로움)
+
+- GCLib Proxy
+
+  - Dynamic Proxy의 문제를 해결하기 위해 Spring은 GCLib이라는 바이트 조작 라이브러리를 사용하여  프록시 객체가 인터페이스(DiscountService)에 기반하지 않고 클래스(RateDiscountService) 상속을 기반으로 프록시 객체를 생성하게 하였다.
+
+- @EnableAspectJAutoProxy
+
+  - true :  GCLib Proxy사용
+  - false : Dynamic Proxy사용
+
+  
+
+  
+
+  
+
+  
+
+  
 
 </details>
 
@@ -1922,6 +1989,40 @@
 
 -----------------------
 
+### @Transactional 읽기 전용
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- JPA를 이용해 엔티티가 영속성 컨텍스트에 의해 관리되면 1차캐시, 지연 로딩 등 많은 이점을 제공해주게 된다. 하지만 더티 체킹을 위해 1차 캐시에 있는 엔티티의 스냅샷을 찍어 메모리에 저장해 놓기 때문에 메모리 성능으로는 좋지 못할 수 있다.
+- 읽기 전용을 사용하게 된다면 스냅샷을 저장하지 않고 엔티티의 영속성 여부만 판단하면 되기 때문에 메모리 성능을 향상시킬 수 있는 장점이 있다.
+- 읽기 전용 방법
+  - 엔티티가 아닌 스칼라 타입으로 특정 필드만 선택해서 조회
+    - `SELECT o.id, o.name FROM Order o`
+
+  - 읽기 전용 트랜잭션 사용
+    - @Transactional(readOnly = true)
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### QueryDsl
 
 <details>
@@ -2168,3 +2269,58 @@
 
 <br>
 
+
+
+<br>
+
+-----------------------
+
+### @NotNull, @NotEmpty, @NotBlank
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- 
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### RequestBody
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- 
+
+
+
+</details>
+
+-----------------------
+
+<br>
