@@ -834,7 +834,7 @@
 
 -----------------------
 
-- 서블릿 기반의 웹 서비스 일 때,  서블릿 컨테이너에서 요청 url에 맞는 url Mapping과 서블릿을 추가해주어야한다. 하지만 FrontController 패턴을 이용해 모든 요청을 하나의 서블릿에서 처리하고 각 요청에 맞는 핸들러에 dispatch해주는 역할을 해주는 것이 DispathcerServlet이다.
+- 서블릿 기반의 웹 서비스 일 때,  서블릿 컨테이너에서 요청 url에 맞는 서블릿을 추가해주어야한다. 하지만 FrontController 패턴을 이용해 모든 요청을 하나의 서블릿에서 처리하고 각 요청 url에 맞는 핸들러에 dispatch해주는 역할을 해주는 것이 DispathcerServlet이다.
 - 요청이 들어오면 HttpServlet의 service()가 실행되고 DispatchServlet의 doDispatch()가 호출되어 핸들러를 찾고 어댑터를 찾고 비즈니스 로직이 수행되어 클라이언트에게 결과가 반환된다.
 - 상속
   - ![image-20220815152831066](/Users/flab1/Library/Application Support/typora-user-images/image-20220815152831066.png)
@@ -972,20 +972,20 @@
           - 처리할 worker thread가 없다면 accepter는 block된다
 
       - Http11ConnectionHandler
-        - Http11Processor를 가지고 있다.
-
+        - Http11Processor
+          - 요청을 Http 정보를 모아 캡슐화
+      
     - Mapper
       - http요청에 맞는 서블릿에 바인딩 시켜주는 역할
-
+    
     - CoyoteAdapter
       - 소켓의 http요청을 HttpServletRequest객체로 변환
-
+    
   - 처리
     1. Accepter에서 port listener를 통해 소켓을 얻는다.
     2. 소켓에 Worker에서 worker thread를 할당해준다.
     3. worker에서 소켓을 처리하기 위해 Http11ConnectionHandler에서 Htt11Processor를 가져온다.
     4. CoyoteAdapter에서 소켓을 HttpServletRequest로 변환하고 서블릿을 호출한다.
-
 - NIO Connector
   - <img width="736" alt="image" src="https://user-images.githubusercontent.com/57162257/184616040-c3af4798-4554-497e-9234-62ed796d4145.png">
   - BIO Connector와 다르게 Poller라는 특수한 스레드를 사용해서 데이터를 읽을수 있는 상태의 소켓만 worker thread에 할당된다.
@@ -1008,11 +1008,11 @@
 
       - Http11ConnectionHandler
         - Http11Processor
-
+          - 요청의 http정보를 캡슐화
+      
     - Mapper
     - CoyoteAdapter
-      - 소켓의 http요청을 HttpServletRequest로 변환하여 서블릿을 호출한다.
-
+      - 소켓의 http요청을 ServletRequest(Request)로 변환하여 서블릿을 호출한다.
   - 처리
     1. Accepter에서 소켓을 얻고 소켓 -> NIO Channel -> Poller Event로 순서대로 캡슐화 한 후 Poller Event Queue에 저장한다.
     2. Poller 스레드가 Poller Event Queue에 저장된 Poller Event를 꺼내서 NIO Channel을 Selector에 저장한다.
@@ -1048,14 +1048,14 @@
 
 - Servlet 3.0 이전
 
-  - 서블릿 컨테이너에서의 요청과 서블릿에서의 처리가 1대1 매칭이기 때문에 서블릿의 요청이 끝날때까지 요청 스레드가 idle 상태로 유지된다.
+  - 서블릿 컨테이너에서의 요청 스레드(servlet thread)와 서블릿에서의 처리(worker thread)가 1대1 매칭이기 때문에 서블릿의 요청이 끝날때까지 요청 스레드가 idle 상태로 유지된다.
   - 스레드 부족현상 발생
 
 - Servlet 3.0 (Async)
 
   - <img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/184616344-ae9e77e2-ef69-4970-b247-f883e2c8c531.png">
 
-  - 비동기 처리를 추가해 서블릿 컨테이너의 요청 스레드와 서블릿의 처리 스레드를 분리하였다.
+  - 비동기 처리를 추가해 서블릿 컨테이너의 요청 스레드와 서블릿의 처리 스레드를 비동기 처리로 분리하였다.
 
   - 처리
 
@@ -1068,11 +1068,12 @@
 
   - 문제점
 
-    - Async Servlet으로 서블릿 컨테이너의 요청 스레드와 서블릿의 처리 스레드는 분리가 되었다. 하지만 처리가 오래걸리는 요청이 들어오면 서블릿 컨테이너와 서블릿 사이의 I/O가 오래걸리게 되고 Block이 발생한다.
+    - Async Servlet으로 서블릿 컨테이너의 요청 스레드와 서블릿의 처리 스레드는 분리가 되었다. 하지만 서블릿은 여전히 Blocking I/O였기 때문에 처리가 오래걸리는 요청이 들어오면 서블릿 컨테이너와 서블릿 사이의 I/O가 오래걸리게 되고 Block이 발생한다.
+    - 스레드 block이 발생하게되면 스레드는 wait상태로 변경되어 context switching이 발생하고 I/O완료시 running상태로 변경되면서 다시 context switching이 발생하여 총 2번의 context switching발생으로 CPU에 부하를 줄 수 있다.
 
 - Servlet 3.1 (Asnyc, Non Blocking I/O)
 
-  - 데이터가 크다면 서블릿에 읽기 위한 대기로 인해 Block이 생기고 쓰는 데이터가 크다면 서블릿 컨테이너에서 쓰기 위한 대기로 Block이 생기게 된다.
+  - 데이터가 크다면 서블릿에 읽기 위한 대기로 인해 Block이 생기고 쓰는 데이터가 크 다면 서블릿 컨테이너에서 쓰기 위한 대기로 Block이 생기게 된다.
   - Read / Write Listener를 통해 3.0의 Blocking 문제를 해결할 수 있다.
   - Read Listener
     - onDataAvailable
