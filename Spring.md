@@ -1300,6 +1300,20 @@
 - 사용이유
   - JDBC를 사용하기 위해서는 Driver로드-Connection생성-Statement로 질의생성-ResultSet 결과 매핑-종료의 과정을 거치게 된다. 이때 매번 Driver를 로드하고 Connection을 생성하는 것은 비용이 비싸기 때문에 미리 정의된 Connnection 개수만큼 생성하여 Pool에 저장하여 Connection 비용과 시간을 단축시킬 수 있다.
 
+- HikaripCP
+  - 가벼운 용량과 빠른 속도를 가진 JDBC의 Connection Pool 프레임워크
+  - 동작
+    - Thread에서 Connection요청
+    - Connection Pool에 사용가능한 Connection이 있다면 커넥션 제공
+    - Connection이 존재하지 않는다면, HandOfQueue Pooling을 하면서 다른 Thread의 Coinnection 반납을 대기한다.
+      - 다른 Thread가 Connection을 반납하면 HandOfQueue에 Connection을 삽입하고 HandOfQueue Pooling하던 Thread에 Connection을 할당한다.
+
+- Connection Pool 크기
+  - MySQL : 600명에 15~20개의 Connection Pool
+  - 모 테크 블로그 : Tn * (Cm - 1) +1
+    - Tn : 총 스레드 개수
+    - Cm : 하나의 Task에서 동시에 필요한 Connection 수
+
 
 </details>
 
