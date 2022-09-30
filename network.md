@@ -306,6 +306,53 @@
 
 -----------------------
 
+### TCP의 오류 제어, 흐름 제어
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
++ 흐름 제어 : 송신 측은 수신 측의 데이터 처리 속도를 감안해서 전송할 데이터 크기를 제어한다.
+  + Stop and Wait
+    + 송신측이 수신측의 확인 응답을 받을 때까지 대기하고 전송하는 방법
+  + Sliding Window
+    + 수신 측에서 설정한 윈도우 크기만큼 송신 측에서 확인 응답없이 데이터를 연속적으로 전송하는 방법.
++ 오류 제어 : 데이터가 유실되었거나 오류가 발생했을때 송신측에서 데이터를 재전송하는것.
+  + Stop and Wait
+    + 송신측에서 ACK를 기다리다가 타임아웃시 동일한 데이터를 전송하는 방법
+    + <img width="323" alt="image" src="https://user-images.githubusercontent.com/57162257/185849036-2eccb373-20c2-43ab-97ad-89a5f15f162d.png">
+
+  + Go back N
+    + 송신측에서 여러개의 데이터를 전송한 후 특정 데이터에 대해 수신측에서 NACK를 보내면 해당 데이터부터 다시 요청하는 방법.
+    + <img width="310" alt="image" src="https://user-images.githubusercontent.com/57162257/185848913-86968508-7f0b-4891-a3ed-8d64b713adb9.png">
+
+  + Selective Repeat
+    + Stop and Wait보다 효율적인 Go back N방식이지만 특정 데이터에 오류가 발생하면 그 이후의 데이터는 폐기처분되어 비효율적일 수 있다.
+    + 에러난 데이터에 대해서만 선택적으로 재전송하는 방법
+    + <img width="312" alt="image" src="https://user-images.githubusercontent.com/57162257/185849337-e82a6b7b-728d-4277-9d0c-857d494d6030.png">
+    + 수신측의 버퍼에 쌓인 데이터가 연속적이지 못하다는 단점
+
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### www.naver.com 검색시 발생하는 과정
 
 <details>
@@ -497,54 +544,6 @@
 -----------------------
 
 <br>
-
-
-
-<br>
-
------------------------
-
-### TCP의 오류 제어, 흐름 제어
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
-
------------------------
-
-+ 흐름 제어 : 송신 측은 수신 측의 데이터 처리 속도를 감안해서 전송할 데이터 크기를 제어한다.
-  + Stop and Wait
-    + 송신측이 수신측의 확인 응답을 받을 때까지 대기하고 전송하는 방법
-  + Sliding Window
-    + 수신 측에서 설정한 윈도우 크기만큼 송신 측에서 확인 응답없이 데이터를 연속적으로 전송하는 방법.
-+ 오류 제어 : 데이터가 유실되었거나 오류가 발생했을때 송신측에서 데이터를 재전송하는것.
-  + Stop and Wait
-    + 송신측에서 ACK를 기다리다가 타임아웃시 동일한 데이터를 전송하는 방법
-    + <img width="323" alt="image" src="https://user-images.githubusercontent.com/57162257/185849036-2eccb373-20c2-43ab-97ad-89a5f15f162d.png">
-
-  + Go back N
-    + 송신측에서 여러개의 데이터를 전송한 후 특정 데이터에 대해 수신측에서 NACK를 보내면 해당 데이터부터 다시 요청하는 방법.
-    + <img width="310" alt="image" src="https://user-images.githubusercontent.com/57162257/185848913-86968508-7f0b-4891-a3ed-8d64b713adb9.png">
-
-  + Selective Repeat
-    + Stop and Wait보다 효율적인 Go back N방식이지만 특정 데이터에 오류가 발생하면 그 이후의 데이터는 폐기처분되어 비효율적일 수 있다.
-    + 에러난 데이터에 대해서만 선택적으로 재전송하는 방법
-    + <img width="312" alt="image" src="https://user-images.githubusercontent.com/57162257/185849337-e82a6b7b-728d-4277-9d0c-857d494d6030.png">
-    + 수신측의 버퍼에 쌓인 데이터가 연속적이지 못하다는 단점
-
-
-
-
-</details>
-
------------------------
-
-<br>
-
-
 
 
 
@@ -770,6 +769,48 @@
 
 
 
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### CORS & CSRF & XSS
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+
+
+-----------------------
+
+- CORS (Cross Origin resource sharing)
+  - 교차 출처 리소스 공유
+  - 다른 출처(domain)로 URL을 요청하여 리소스를 가져오는 것.
+  - 서버에서는 응답시 access-control-allow-origin에 허용된 도메인을 보내고 사용자의 웹 브라우저는 요청때 보낸 origin에서 출처의 도메인과 비교한다.
+
+- CSRF (Cross Site Request Forgery)
+  - 사이트간 위조 요청
+  - 사용자가 메일이나 링크를 누르게 되면 Put, Delete로 서버에 악의 요청을 보내는 것.
+  - 서버에서는 요청 헤더의 referer에 등록되어 있는 요청 domain정보를 확인하여 올바른 domain에서 요청이 들어왔는지 확인하거나,
+    Csrf-token을 사용해서 사용자가 요청시 csrf-token이 올바른지 판단하여 검증하는 방법
+    - 서버에서 생성된 곳에서 요청을 보내고있음을 증명한다.(referer, csrf-token)
+
+- XSS (Cross Site Scripting)
+  - 공격자가 상대방이 자주사용하는 웹사이트에 악성 스크립트를 삽입하여 사용자가 악성 스크립트가 포함된 게시글을 사용했을 때 공격자에게 사용자의 쿠키 정보를 탈취하여 사용자 정보를 도용하거나 해당 사이트에 악의적 요청을 보내는것.
+  - 사용하고 있는 웹 사이트 이상한 점은 없는지 이상한 URL로 접속해있는지 확인해야한다.
 
 </details>
 
