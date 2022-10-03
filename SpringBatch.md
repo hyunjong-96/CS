@@ -175,6 +175,9 @@
 
 - <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/186850076-a9a49683-d962-4d29-a611-d5c758d4634d.png">
 - Chunk는 한번에 하나씩 데이터를 읽어서 Chunk단위를 만들고 Chunk단위에서 트랜잭션을 다루는 것.
+- Chunk지향인 이유
+  - `청크지향 프로세싱`이란, 일반적으로 대용량 데이터를 처리하는 배치 프로세스의 특성상 대상 데이터들을 하나의 트랜잭션으로 처리하기에는 어려움이 있기때문에 대상 데이터를 임의의 `Chunk` 단위로 트랜잭션 동작을 수행하는것을 말합니다.
+
 - Spring Batch는 Chunk 지향으로써 Chunk 지향 처리를 위해 ChunkOrientedTasklet을 사용한다.
 - ChunkOrientedTasklet
   - Chunk지향 처리의 전체로직을 다루는 클래스.
@@ -210,10 +213,11 @@
 -----------------------
 
 - Spring Batch에서 PagingItemReader를 통해 데이터를 읽어오는 경우가 있다.
-- 이때 pageSize는 데이터를 한번에 조회할 Item의 양을 얘기하며 chunSize는 트랜잭션 처리를 위한 Item의 양이다.
+- 이때 pageSize는 데이터를 한번에 조회할 Item의 양을 얘기하며 chunkSize는 트랜잭션 처리를 위한 Item의 양이다.
 - 예를 들어 pageSize가 10이고 chunkSize가 50이면 한번의 doRead()에서 10개의 데이터를 가져오고 chunkSize를 맞춰주기 위해 총 5번의 doRead()가 발생한다.
 - PageSize와 ChunkSize는 동일하게 설정하는 것을 지향한다.
-  - pageSize와 chunkSize를 다르게 설정하면 chunkSize를 맞추기 위해 page만큼의 추가 조회 쿼리가 생성되는데 이로 인해 영속성 컨텍스트가 깨지는 등의 성능 이슈가 발생할 수 있기 때문이다.(JpaPagingItemReader)
+  - pageSize와 chunkSize를 다르게 설정하면 chunkSize를 맞추기 위해 page만큼의 추가 조회 쿼리가 생성되는데 이로 인해 성능 이슈가 발생할 수 있고 영속성 컨텍스트가 깨지는 문제가 발생 수 있기 때문이다.(JpaPagingItemReader)
+    - pageSize와 chunkSize를 같게 설정해주지 않으면 총 5번의 쿼리가 발생했다고 했을때(doRead()) 마지막 쿼리를 제외하고 앞에 4개의 결과의 트랜잭션 세션이 끊기게 되어 LazyInitializationException이 발생하게된다.
 
 
 </details>
@@ -247,25 +251,41 @@
     - open : ItemReader에서 필요한 상태를 초기화 (데이터 베이스 연결, Job 재시작시 이전 상태 복원 등)
     - update : Job의 상태를 갱신하는 처리
     - Close : ItemReader를 닫을 때
-
 - 종류
   - Cursor 기반의 ItemReader
     - ResultSet의 next()를 통해 stream으로 데이터를 하나씩 꺼내온다.
     - Cursor는 하나의 connection으로 데이터베이스와 애플리케이션이 통신하는데 Batch 작업이 끝나기 전에 connection 세션이 종료될 수 있기 때문에 timeout을 크게 설정해야한다.
       만약 Batch 수행이 오래걸리는 경우 PagingItemReader를 사용하는 것이 좋다.
+    - 장단점
+      - 장점
+        - 모든 데이터를 조회한 뒤 cursor를 이동하는 방식으로 데이터를 가져오기 때문에 높은 성능을 보장한다.
+        - 스냅샷 방식으로 동작하기 때문에 데이터의 변경에 안전하다.
+          - connection이 종료될때까지 다른 트랜잭션의 결과를 무시한다.
+      - 단점
+        - 스냅샷방식을 사용하기 때문에 많은 메모리를 사용하다.
+        - 단일 ResultSet을 가지기 때문에 Thread safe 하지 않다.
+        - 긴 timeout이 필요하다.
     - 종류 : JdbcCursorItemReader, HibernateCursorItemReader
   - Paging 기반의 ItemReader
     - limit (행의 개수)와 offset (시작 행 번호)을 지정하여 paging쿼리마다 connection 연결로 통신한다.
     - 데이터베이스마다 paging 전략이 있기 때문에 PagingQueryProvider에 datasource를 설정하여 queryProvider속성에 설정하면 자동으로 데이터베이스에 맞는 provider를 제공해준다.
+    - 장단점
+      - 장점
+        - 스냅샷을 찍지 않아 메모리 이슈가 없다
+        - timeout에 자유롭다
+        - 병럴처리가 가능하다.
+      - 단점
+        - 매번 connection과 sort가 발생하기 때문에 느리다
+        - 실시간 데이터를 조회하기 때문에 데이터 무결성이 깨질수도 있다
+        - 정렬이 필수적으로 필요하다.
     - 종류 JdbcPagingItemReader, HibernatePagingItemReader, JpaPagingItemReader
     - PagingItemReader 주의 사항
       - 데이터를 조회해서 조건절을 update할때 limit은 동일하게 0부터 offeset만큼 증가하게 된다. 하지만 데이터 조회시에는 이전에 변경된 데이터는 제외되어 조회되기 때문에 offeset이 건너뛰어지는 이슈가 발생한다.
         그렇기 때문에 JpaPagingItemReader에서 `getPage를 오버라이딩하여 0을 항상 반환`하게 하면 특정 offeset을 건너뛰지 않게 된다.
         - <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/186858878-6fea2cbd-8fa8-4991-9525-6f4ccb89600b.png">
-
+    
       - Paging시 정렬 기준을 선언하지 않는다면 페이징 별 쿼리가 독립적인 정렬기준을 만들어 앞에 조회되었던 데이터가 다음 조회에 포함되거나 빠지기도 한다.
         그렇기 때문에 `Order by id` 와 같은 정렬을 선언해주거나 `CursorItemReader`를 사용한다.
-
 - ItemReader 주의사항
   - JpaRepository를 사용해서 조회쿼리를 쉽게 하기 위해 ListItemReader, QueueItemReader를 사용할때 Chunk단위 트랜잭션은 지원해주지만 paging과 cursor를 지원해주지 않기 때문에 대용량 데이터를 처리하는데 어려움이 있다.
     이때 RepositoryItemReader를 사용하면 JpaRepository를 사용할수 있으면서 paging기능을 제공받을 수 있다.
@@ -445,10 +465,10 @@
 - 멱등성 : 연산을 여러번 해도 결과가 달라지지 않는 성질
 - 멱등성을 유지하는 기능
   - 첫번째로 값을 Update하고 N-1번 반복되는 기능을 요청했을때 앞의 요청과 동일한 결과가 나오는 기능.
-
 - 멱등성이 깨진 경우
   - 내부에 LocalDate.now()를 사용해 오늘 생성된 데이터로 작업을 하는 Batch 작업이 있다고 할때, 날짜별로 기능을 수행하게 되면 다른 결과가 나오게되며 특정 날짜에 대한 결과를 반환하고 싶을땐 내부 코드를 수정해야하기 때문에 제어되지 않는 코드이므로 멱등성이 깨진 기능이다.
   - JobParameter를 사용해서 특정 날짜를 파라미터로 보내게되면 요청하는 날짜에 대한 결과는 동일하게 반환되기 때문에 멱등성이 유지되게 된다.
+- Http공식문서에서 '전체 시퀀스의 단일 실행이 해당 시퀀스의 전체 또는 일부 재실행을 통해 변경되지 않는 결과를 생성하는 경우 시퀀스는 멱등성'이라고 한다. Get, Put, Delete가 멱등성이라 했고, 나는 다른 파라미터값을 가져도 각 파라미터값에 따라 불러오는 값은 결과는 결국 변경되지 않고 동일하게 반환되기 때문에 멱등성이 유지된다고 생각한다.
 
 
 </details>

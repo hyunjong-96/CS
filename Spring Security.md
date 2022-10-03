@@ -49,6 +49,7 @@
   - Security Filter는 서블릿 컨테이너의 Filter Chain에 DelegatingFilterProxy를 등록하고 delegatingFilterProxy는 빈으로 등록된 SecurityFilterChain에게 필터 작업을 위임한다. (스프링 컨테이너의 filter 작업 전체 작업 위임 x, security filter 작업 위임 o)
   - 방법
     - WebSeucrityConfiguerAdapter라는 Filter chain을 구성하는 클래스를 상속받아 Configure클래스를 생성하고configure() 를 오버라이딩하여 filter chain을 구성할 수 있다.
+    - 현재 WebSecurityConfigureAdapter클래스가 deprecate당해서 새로운 방법을 사용해야한다 (공부해야함)
   - 종류
     - SecurityContextPersistenceFilter : SecurityContextRepository를 통해 Session에 SecurityContext가있는지 확인하고 존재한다면 해당 SecurityContext를 SecuirtyContextHolder에 저장하고 thread-local에 저장한다.
     - UsernamePasswordFilter : login요청을 감시하며 인증과정 진행.
@@ -189,7 +190,7 @@
 
 - 요청이 들어오게 되면 SecurityContextPersistenceFilter에서 HttpSessionSecurityContextRepository를 통해 인증 여부를 확인합니다.
 - 인증 전에는 UsernamePasswordAuthenticationFilter에서 사용자를 인증하고 인증된 객체인 Authentication을 SecurityContext에 저장합니다. 그리고 사용자에게 응답하기 전에 Session에 SecurityContext를 저장하고 인증된 정보를 사용합니다.
-- 인증 후에는 Session의 SecurityContextHolder에서 SecurityContext를 불러와 thread local에 SecurityContext를 담은 SecurityContextHolder를 저장하고 인증된 정보를 사용합니다.
+- 인증 후에는 Session의 SecurityContext를 불러와 thread local에 SecurityContext를 담은 SecurityContextHolder를 저장하고 인증된 정보를 사용합니다.
 
 </details>
 

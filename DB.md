@@ -600,6 +600,7 @@
     + B-Tree에서 탐색을 위해 노드를 찾아서 이동해야한다는 단점을 LinkedList를 통해 해결
     + Inner Node와 Leaf Node로 구성되어있다.
     + Inner Node에 key만 정렬되서 저장되어있고 데이터는 Leaf Node에 LinkedList로 연결되어 저장되어있다.
+    + 뿐만 아니라 다른 Inner Node에서도 같은 레벨의 노드끼리는 LinkedList로 연결되어있기 때문에 다음 노드로 이동할 수 있다.
     + 장점
       + Leaf Node가 LinkedList로 연결되어있어 선형탐색이 가능하고 부등호 연산에 효율적이다.
       + leaf node를 제외하고 다른 노드는 데이터를 저장하고 있지 않기 때문에 메모리를 더 확보할수 있다. 그렇기 때문에 하나의 node에서 더 많은 포인터를 가질 수 있기 때문에 트리의 높이가 낮아 검색 속도를 높일 수 있다.
