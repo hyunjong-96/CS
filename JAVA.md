@@ -199,7 +199,10 @@
   + 큰 덩어리의 인터페이스보다 구체적이고 작은 단위로 나누어 필요한 메소드만 사용할 수 있게 해야한다.
 
 + 의존관계 역전 원칙(Dependency Inversion Principle)
-  + 추상화 된것은 구체적인 것에 의존하면 안된다. 구체적인 것이 추상화된 것에 의존해야 한다.
+  + 객체는 저수준 모듈보다 고수준 모듈에 의존해야한다.
+    + 저수준 모듈 : 구현체
+    + 고수준 모듈 : 인터페이스와 같은 객체 형태나 추상적 개념
+    + <img width="400" alt="image" src="https://user-images.githubusercontent.com/57162257/193524894-221a4041-a80a-4e71-af70-d2c45ab47105.png">
   + 변화하기 쉬운것보다 변화하기 어려운것에 의존해야한다.
   + ex) 자동차는 변하기 쉬운 구체적인 타이어에 의존하면 안된다.
     + 타이어 종류에는 스노우타이어, 일반 타이어, 광폭타이어 등이 있어서 타이어가 변경될 때마다 자동차에 영향을 준다.
@@ -219,7 +222,7 @@
 
 -----------------------
 
-### 객체지향 프로그래밍 vs 절차지향 프로그래밍
+### 객체지향 프로그래밍 vs 절차지향 프로그래밍 vs 함수형 프로그래밍
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -231,10 +234,14 @@
 + 절차지향 프로그래밍 
   + 문제를 해결하기 위해 순차적으로 프로그래밍 하는 방법
   + 빠르게 구현할 수 있지만 절차가 정해져있기 때문에 유지보수가 어렵다.
-
 + 객체지향 프로그래밍
   + 구현하고자 하는 객체들의 상호작용을 프로그래밍 하는 방법
   + 상속, 다형성, 캡슐화, 추상화를 통해 결합도를 낮추고 응집도를 높일 수 있으며, 코드 재사용률을 높일 수 있다.
++ 함수형 프로그래밍
+  + 문제를 함수들의 정의와 조합을 통해서 해결하는 프로그래밍
+  + 함수의 개념을 최우선적으로 사용해서 모든 문제를 해결하는 프로그래밍
+  + 순수 함수들로 작성하여 모듈성이 증가하여 재사용률이 높아지고 반복개발이 쉬워진다.
+
 
 
 
@@ -376,7 +383,7 @@
   + PC Register
     + 스레드가 생성될때 함께 생성되며 Thread가 어떤 부분을 명령으로 수행해야하는지를 저장하고 있다.
     + 즉, JVM의 명령 주소를 저장
-    + 각 Thread는 메소드를 수행하고 PC Register는 해당 메소드의 몇번째 줄을 실행해야하는지 나타낸다.
+    + 각 Thread는 메소드를 수행하고 PC는 해당 메소드의 몇번째 줄을 실행해야하는지 나타낸다.
   + JVM Stack
     + 매개변수, 지역변수, 반환 값 등 메소드의 정보를 저장했다가 메소드 종료시 삭제된다.
   + Nativ Metdho Stack
@@ -416,11 +423,17 @@
 + GC 종류
   + Serial GC : 하나의 스레드로 GC 수행
   + Parallel GC : java 8의 default GC, 여러 스레드로 GC 수행
+    + 의도적으로 GC를 수행해야한다.
+    + 애플리케이션과 GC가 병렬 수행
+    + Age bit = 15
   + G1 GC : java 9의 default GC, Heap을 여러 영역으로 나누어 GC 수행
     - <img width="304" alt="image" src="https://user-images.githubusercontent.com/57162257/187113600-2594d63f-9214-4cf4-835e-814379d7f7fb.png">
     - young, old generation 영역을 명확하게 구분하는 전통적 heap과 다르게 eden, survivor, old, unused등의 작은 region으로 나누어져있다.
+    - 이전에 사용하던 GC와 마찬가지로 최초 객체가 생성되면 Eden영역에 할당하고 이후 Survivor영역으로의 이동과 소멸, Old Generation으로 이동 생명주기를 가지게된다.
+    - life cycle
+      - ?
     - 장점 
-      - young, old영역을 전체 탐색하는 것이 아닌, 특정 영역에 있는 Garbage를 제거함으로써 처리 속도가 빠르고 빠르게 빈 공간을 확보하기 때문에 GC의 빈도도 낮아진다.
+      - young, old영역을 전체 탐색하는 것이 아닌, 특정 영역에 메모리가 많이 차있는 영역을 인식하여 GC를 수행함으로써 처리 속도가 빠르고 빠르게 빈 공간을 확보하기 때문에 GC의 빈도도 낮아진다.
     - 단점
       - Major, minor GC가 발생해도 공간이 부족한 경우 싱글 스레드로 Full GC(stop the world)가 발생하여 GC 처리 속도가 느리다.
 + GC 알고리즘
@@ -429,20 +442,21 @@
     + 두 객체가 서로를 참조한다면 reference count가 영구적으로 1이되기 때문에 GC의 대상이 되지않는 문제가 발생할 수 있다.
 
   + Mark and Sweep
-    + root에서 부터 해당 객체에 접근가능한 객체는 `Mark`, 접근이 불가능한 객체는 GC의 대상이되어 삭제(`Sweep`)
+    + root space 에서 부터 해당 객체에 접근가능한 객체는 `Mark`, 접근이 불가능한 객체는 GC의 대상이되어 삭제(`Sweep`)
+      + root space : stack의 지역변수, method area의 static 변수, native method statck의 JNI참조
 + GC 동작과정
   1. Young Generation의 Eden영역이 포화상태가 된다.
   2. Mark and Sweep 실행(Minor GC)
   3. 살아남은 객체는 survival 0영역에 저장된다.
   4. survival 0영역이 포화되면 Minor GC 실행후  survival 1로 이동
   5. 살아남은 횟수 age가 일정 횟수가 된다면 Old Generation 영역에 저장된다.
-  6. Old Generation이 포화상태가 되면 Major GC (Full GC) 로 Stop the world 발생.
+  6. Old Generation이 포화상태가 되면 Major GC발생.
 + 장단점
   + 장점 : 메모리 누수 방지, 해제된 메모리 접근 방지
   + 단점 : GC가 언제발생할지 모름
 + 주의 사항
-  + Major GC(Full GC)는 Minor GC보다 실행시간이 훨씬 오래걸리며 GC실행시 발생하는 Stop the World로 인해 실시간 프로그램에서 크리티컬한 이슈가 발생할 수 있다.
-  + old영역으로 넘어가는 객체 수를 줄이기 위해 String보다는 StringBuilder나 StringBuffer를 사용하고 로그 수를 줄인다. 그리고 Old영역의 크기를 조절해서 Full GC의 빈도를 줄이고 GC수행 시간을 적게 하도록 잘 조절한다.
+  + Major GC는 Minor GC보다 실행시간이 훨씬 오래걸리며 GC실행시 발생하는 Stop the World로 인해 실시간 프로그램에서 크리티컬한 이슈가 발생할 수 있다.
+  + old영역으로 넘어가는 객체 수를 줄이기 위해 String보다는 StringBuilder나 StringBuffer를 사용하고 로그 수를 줄인다. 그리고 Old영역의 크기를 조절해서 Major GC의 빈도를 줄이고 GC수행 시간을 적게 하도록 잘 조절한다.
 
 
 </details>
@@ -632,8 +646,99 @@
 -----------------------
 
 + 클래스나 메소드를 사용할때 데이터 타입을 외부에서 설정하는 것
+
 + 제네릭이 없을 때는 여러 타입을 사용하는 클래스나 메소드에서 인수나 반환값을 Object타입으로 사용했다. 이는 객체를 꺼낼때 타입 변환을 직접 해주어야 했고 오류가 발생할 가능성이 존재한다.
+
 + 제네릭을 사용함으로써 컴파일 시에 미리 타입이 정해지고, 타입 변환과 같은 번거로운 작업을 생략할 수 있게 되었다.
+
++ 컴파일 시점에 타입을 체크함으로서 코드의 안정성을 높여주는 기술
+
+  + List< T > 에서 T가 타입 매개변수
+  + 장점
+    + 컴파일 시점에 강력한 타입 검사
+      + 선언한 타입 이외의 타입이 들어오게 되면 컴파일 에러 발생
+
+    + 캐스팅 (타입 변환) 제거
+      + 제네릭 타입을 사용하지 않게되면 Object로 데이터를 가져와 형 변환 과정이 추가되어야한다.
+
++ 공변과 불공변
+
+  + 공변
+    + A가 B의 하위 타입일때 배열 A[]은 배열 B[]의 하위 타입이다.
+
+  + 불공변
+    + A가 B의 하위 타입일때 List< A >는 List< B >의 하위 타입이 아니다.
+    + 제네릭 타입은 불공변이다.
+
++ 제네릭 클래스와 제네릭 메소드
+
+  + ```java
+    class MyParent<T>{	//제네릭 클래스 타입
+      private T t;
+      public void set(T t){
+        this.t = t;
+      }
+      public T get(){
+        return this.t;
+      }
+      
+      public <T> printElement(T t){	//제네릭 메소드 타입
+        System.out.println("제네릭 클래스 타입 : "+this.t.getClass().getName());
+        System.out.println("제네릭 메소드 타입 : "+t.getClass().getName());
+      }
+    }
+    ```
+
++ 와일드 카드
+
+  + 모든 타입을 대신할 수 있는 타입
+  + 정해지지 않은 unknown type이기 때문에 Collection<?>로 선언시 모든 타입에 대해 호출이 가능해졌다.
+    + 특정 타입이 지정되지 않았으므로 Object로 받아야한다.
+
++ 한정적 와일드 카드
+
+  + 정해지지 않은 타입으로 발생하는 문제를 해결하기 위해 특정 타입을 기준으로 상한 범위와 하한 범위를 지정해준다.
+  + 상한 경계 와일드 카드
+    + extends를 이용해 와일드카드의 최상위 타입을 정의하여 상한 경계를 설정한다.
+    + <? extends MyParent>로 선언해줌으로서 선언한 타입의 자신과 자신의 자식 클래스가 가능해진다.
+    + <? extends MyParent>로 선언한 타입은 MyParent로 객체를 꺼낼수 있다.
+      + 해당 선언은 최소 MyParent의 자식 클래스가 확실하기 때문이다.
+
+    + 하지만 객체는 저장할 수 없다.
+      + <? extends MyParent>로 선언된 타입에 자식 클래스가 저장되게 된다면 자식 클래스는 부모 클래스가 될수 있지만, 부모 클래스는 자식 클래스가 될수 없기 때문에 타입을 명확히 지정해줄 수 없기 때문이다.
+
+  + 하한 경계 와일드 카드
+    + 상한 경계와 반대로 super를 이용해 와일드카드의 최하위 타입을 정의하여 하한 경계를 설정한다.
+    + <? super MyParent>로 선언해줌으로서 선언한 타입의 자신과 부모 클래스가 가능해진다.
+    + <? super MyParent>로 선언한 타입은 MyParent와 자식 클래스 타입을 저장할 수 있다.
+      + 해당 선언은 최소 MyParent클래스가 확실하기 때문에 자기 자신인 MyParent와 MyParent가 될 수 있는 그 자식 클래스들이 저장될 수 있기 때문이다.
+
+    + 하지만 객체를 꺼낼수 없다.
+      + <? super MyParent>로 선언된 타입에는 MyParent와 MyParent의 부모 클래스 타입이 저장되어 있을 수 있는데, MyParent의 부모클래스(Object 등..)은 MyParent와 그 자식 클래스가 될 수 없기 때문이다.
+      + 하지만 <? super MyParent>에는 MyParent와 그 부모 클래스타입이 들어있을 수 있기 때문에 최상위 타입인 Object로는 읽어오기가 가능하다.
+
++ PECS
+
+  + Producer-Extends, Consumer-Super
+
+  + 언제 상한경계를 사용하고 하한경계를 사용해야하는지에 대한 공식.
+
+  + ```java
+    void printCollection(Collection<? extends MyParent> c){	//와일드카드 타입 생성
+      for(MyParent e : c){
+        System.out.println(e);
+      }
+    }
+    
+    void addElement(Collection<? super MyParent> c){	//와일드카드 타입 소비
+      c.add(new MyParent());
+    }
+    ```
+
+  + Collection에서 객체를 꺼내오면 와일드카드 타입의 객체를 생성(producer)하기 때문에 extends를 사용해준다.
+
+  + Collection에 객체를 저장하면 와일드카드 타입의 객체를 소비(consume)하기 때문에 super를 사용해준다.
+
 
 
 </details>
@@ -907,6 +1012,10 @@
 + Java 8에 등장한 기술로 반복 요소 계산 처리 기능을 제공하는 API
 + 특징
   + Parallel 메소드를 제공해서 병렬처리가 가능하다 (내부적으로 스레드풀을 만들어 병렬 처리)
+    + parallelStream()은 thread-safe하지않아 별도의 처리가 필요하다.
+    + Fork-join을 사용해서 하나의 쓰레드를 재귀적으로 특정 depth까지 반복하여 여러 쓰레드로 나누고 자식 스레드의 결과 값을 취합하여 최종스레드의 결과를 만들어 리턴하는 방식.
+    + Fork-join을 사용해서 각 스레드가 공평하게 작업을 처리한다.
+    + pararllel은 공유된 thread pool을 사용하기 때문에 성능장애를 일으킬 수 있다.
   + 불변성(Immutable)이기때문에 원본 데이터를 읽기만 할 뿐 변경하지 않는다.
     + 데이터를 변경할 수 없으며 변경하기 위해서는 재할당을 해야한다.
   + 내부반복으로 작업을 수행하며 최종 연산 후 stream이 닫히므로 일회성 API이다.
@@ -1206,7 +1315,7 @@
       }
       ```
 
-    + synchronized block시 인자에 this로 걸어주게 되면 this를 인자로 가진 synchronized block은 모두 lock이 걸리게 된다. 만약 synchronized block별로 lock을 걸어줄 메소드를 지정해주려면 Object1, Object2 등의 별도로 선언한 객체로 동기화 처리를 할 synchronized block의 인자로 정의하게 되면 object1으로 정의한 메소드끼리 동기화가되고 object2로 정의한 메소드끼리 동기화가 된다.
+    + synchronized block시 인자(객체 참조 표현식)에 this로 걸어주게 되면 this를 인자로 가진 synchronized block은 모두 lock이 걸리게 된다. 만약 synchronized block별로 lock을 걸어줄 메소드를 지정해주려면 Object1, Object2 등의 별도로 선언한 객체로 동기화 처리를 할 synchronized block의 인자로 정의하게 되면 object1으로 정의한 메소드끼리 동기화가되고 object2로 정의한 메소드끼리 동기화가 된다.
 
       ```java
       class synchronized{
@@ -1455,6 +1564,7 @@
 
   + Atomic operations
     + 공유자원 접근시, 원자적으로 정의된 접근 방법을 사용함으로써 상호배제를 구현할 수 있다.
+      + 데이터 변경이 일어나고 있는 시점에는 접근이 불가능하다.
 
 
 
@@ -1488,10 +1598,10 @@
     + thread-safe 보장 안함
     + 데이터 구조 : ArrayList
     + 시간복잡도
-      + add : O(n)
-        + 배열 복사
-      + remove : O(n)
-        + 배열 복사
+      + add : O(1)
+        + 배열 복사 : O(n)
+      + remove : O(1)
+        + 배열 복사 : O(n)
       + get : O(1)
       + contains : O(n)
   + LinkedList
@@ -1510,8 +1620,8 @@
     + null을 허용한다, thread-safe 보장 안함
     + 저장을 목적으로하는 자료구조이기 때문에 get없다.
       + iterator로 순환 탐색
-      + 내부적으로 hashMap으로 구현되어있고 key는 데이터의 해시, value는 더미값을 가지고 있어 map의 key를 get하는 것은 어렵다.
-    + 데이터 구조 : Hash Table
+      + 내부적으로 HashMap으로 구현되어있고 key는 데이터의 해시, value는 더미값을 가지고 있어 map의 key를 get하는 것은 어렵다.
+    + 데이터 구조 : Hash Map
     + 시간복잡도
       + add : O(1)
       + remove : O(1)
@@ -1520,7 +1630,7 @@
   + LinkedHashSet
     + 객체들의 순서를 보장하며 중복을 허용하지 않는다.
     + null을 허용한다, thread-safe 보장 안함
-    + 데이터 구조 : Hash Table + LinkedList
+    + 데이터 구조 : Hash Map + LinkedList
     + 시간복잡도
       + add : O(1)
       + remove : O(1)
@@ -1581,7 +1691,7 @@
       + remove(Object) : O(n) // ?
       + contains() : O(n)
     
-  + PriorityBlockingQueue
+  + PriorityBlockingQueue // ?
     + 일반적인 Queue구조로 우선순위가 높은 데이터 먼저 나가는 자료구조
     + null을 허용하지 않고 Thread-safe 보장
 
@@ -1881,7 +1991,9 @@
   + 효율적인 탐색을 하기 위한 트리.
   + 부모노드의 왼쪽자식노드는 부모노드보다 작은 노드, 오른쪽 자식노드는 부모노드보다 큰 노드
   + 데이터 쏠림현상으로 O(n)의 시간복잡도가 발생할 수 있다. 보통은 O(longN)
-
+    + 삽입 : 삽입전에 탐색을 먼저 수행하게 된다. (중복값을 허용하지 않기 때문), 탐색에 실패했다면 그 자리가 삽입될 자리
+    + 삭제 : 삭제할 노드와 가장 근사한 값을 가진 자식 노드가 대체된다.
+  
 + 레드 블랙 트리
   + 이진 탐색트리에서 데이터 쏠림현상을 방지하기 위한 트리
   + 스스로 균형을 맞춘다.
