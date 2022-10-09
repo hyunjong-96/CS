@@ -374,7 +374,7 @@
 
 -----------------------
 
-### 회복
+### 회복 (Recovery)
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -384,15 +384,68 @@
 
 -----------------------
 
-+ 문제가 발생했을 때 Rollback이 수행되고 UNDO, REDO가 발생하여 문제가 발생되기 전 상태로 돌아가는 것
-+ check point
-  + 로그 파일에 체크포인트를 저장하고 문제 발생시 check point 이후에 처리된 작업들을 회복시키는 것.
++ 데이터베이스에 문제가 발생했을때, 문제 발생 이전으 트랜잭션의 수행을 되돌려야한다. 이를 회복이라고 한다.
 
-+ UNDO
-  + 트랜잭션이 commit되지 않은 상태에서 문제 발생시, 해당 작업이 없던 일로 처리하는 작업
++ 회복을 통해 데이터의 신뢰성을 보장하고, 트랜잭션의 원자성, 영속성을 보장할 수 있다.
+
++ check point
+
+  + 시스템을 회복하기 위해 너무 많이 돌아가지 않게 하기 위한 지점
+  + check poin 이전 지점까지는 트랜잭션이 성공적으로 수행되어 disk에 확실히 저장된 상태
 
 + REDO
-  + 트랜잭션이 commit된 후 문제 발생시, REDO로 check poin지점으로 돌아가 저장된 로그를 통해 commit지점까지 복구하는 작업.
+
+  + 모든 변경사항을 기록하는 log
+
+  + 목적
+
+    + DataBase Recovery
+
+      + 물리적인 문제가 발생한 경우 데이터베이스를 복구시키기 위해 Archive REDO Log을 이용해 데이터베이스 복구
+
+    + Cache Recovery
+
+      + 캐시에 저장된 변경사항들이 디스크에 저장되지 않고 시스템 문제 발생시 휘발성으로 인해 작업내용을 잃어버리게된다 (DB Buffer Cache 등), 이러한 데이터 유실에 대비하여 트랜잭션 데이터를 복구한다.
+      + 시스템 문제가 발생하게 된다면 REDO Log를 통해 체크포인트 지점부터 문제 발생 시점 지점까지 수행되었던 트랜잭션을 재현한다.(Roll-Foward)
+
+    + Fast Commit
+
+      + 트랜잭션 발생시, 결과를 하나하나 디스크에 동기화하는 것이 아닌 변경 사항을 빠르게 로그파일에 저장해놓고 메모리 데이터 블럭과 디스크 파일 블럭간의 동기화는 배치작업을 통해 수행하는 것으로서, REDO로그를 믿고 빠르게 커밋한다는 뜻.
+
+      + 과정
+
+        1. 트랜잭션 변경사항을 REDO Log Buffer에 저장
+
+        2. REDO Log Buffer에 저장된 레코드는 일정 시점마다 REDO Log에 저장
+        3. Archived REDO Log에 REDO Log 백업
+           - Archived REDO Log에 저장된 레코드는 시스템 문제가 발생해도 REDO Log로 데이터 복구가 가능하다.
+
++ UNDO
+
+  + 트랜잭션별로 UNDO세그먼트를 할당해주고 트랜잭션의 변경사항을 UNDO세그먼트에 레코드 단위로 순차적으로 저장
+  + 목적
+    + Transaction Rollback
+      + 트랜잭션에 의한 변경사항을 최종커밋하지 않고 롤백할때
+
+    + Transaction Revocery
+      + 시스템 문제 발생시 REDO로 인해 Roll-Foward가 발생하는데 최종커밋되지 않은 트랜잭션의 변경사항까지 복구된다, 이를 UNDO에 저장된 레코드를 통해 롤백을 시켜준다.
+
+    + Read Consistency
+      + UNDO에 저장된 레코드 데이터를 통해 Lock을 사용하지 않고 일관성있게 읽기 작업을 수행할 수 있다.
+
+  + 데이터 기록
+    + UNDO에는 트랜잭션 ID, 트랜잭션 상태등이 저장되어있고 DML결과에 대한 정보도 함께 포함되어있다
+      + INSERT : 삽입된 row의 ROWID
+      + UPDATE : 바뀐 컬럼의 바뀌지 전 값
+      + DELETE : 지워진 데이터 기록
+
++ 회복 과정
+
+  1. 시스템 장애 발생시, REDO를 통해 마지막 check point지점부터 문제 발생지점까지, DB Buffer Cache 복구 (`Roll-Foward`)
+
+  2. 복구완료 시 UNDO를 통해 최종 commit되지않은 트랜잭션을 롤백함으로써 복구완료 (` Rollback`)
+
+  즉, REDO가 문제 발생 이전으로 복구하고, UNDO를 복구시켜 UNDO가 최종 복구
 
 
 
@@ -487,6 +540,14 @@
     + 데이터를 변경 할 때 사용되는 락
     + X-Lock이 해제될 때까지 다른 트랜잭션은 해당 자원에 접근이 불가능하다.
     + SELECT for UPDATE, UPDATE, DELETE
+  + Table Lock
+    + 사용자가 사용하는 테이블 전체에 lock을 걸어주는 것
+    + 공유 락과 베타 락이 있다.
+    + `LOCK TABLE [테이블 이름] READ ` : 공유락
+    + `LOCK TABLE [테이블 이름] WIRTE` : 베타 락
+  + Record Lock
+    + row단위에 lock을 걸어주는 것
+    + 공유락과 베타락이 있다.
   + Gap Lock
     + DB index record의 gap에 걸리는 락
     + gap이란 index 중 데이터베이스에 실제 record가 없는 부분을 말한다.
@@ -494,6 +555,7 @@
     + 즉 gap lock이란 select for update와 같이 락을 걸어주는 조회쿼리시 **범위**를 사용하였을때, 실제 존재하지 않는 record에 대해 락을 걸어주어 다른 트랜잭션이 해당 gap lock이 걸려있는 레코드 부분에 있어 추가, 수정, 삭제를 못하도록 하는것이다.
   + Next Key Lock
     + Record Lock과 Gap Lock이 함께 사용되는 Lock으로 InnoDB에서 Phantom Read를 방지하기 위해 사용된다.
+      + Record Lock : row의 Index를 기준으로 Lock을 걸어주는 것
     + 위에서 설명했듯이 조회한 범위 내에 존재하지 않는 index에 락을 걸어준다.
     + 사실 gap lock에는 범위에 없는 index뿐만 아니라 앞 뒤 범위도 포함이 되어서 gap lock이 발생한다. (이래야 phantom read를 더 효율적으로 잡을 수 있다고 한다.)
       + next key lock은 보조 인덱스를 사용하기 때문에 보조 인덱스를 만들어줘야 gap lock이 발생한다. 안그러면 테이블 전체에 락이 걸린다.
@@ -515,7 +577,7 @@
 
 -----------------------
 
-### MySQL의 Lock
+### MySQL의 일관된 읽기
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -530,19 +592,22 @@
 + MVCC란 Multi Version Concurency Control의 약자로써 트랜잭션을 지원하는 DBMS가 락을 사용하지 않고 일관된 읽기를 제공하는 것을 목적으로 제공하는 기술.
   + 하나의 레코드에 대해 여러 버전의 레코드를 관리한다.
   + InnDB는 언두 로그에 버전별 레코드를 저장한다.
-
+  + 접근법
+    + 다중 버전 데이터
+      + PostgreSQL, SQL Server등에서 사용하는 방법으로 데이터베이스 내에 다중 버전의 레코드를 저장하고 이후에 정리하는 방식
+      + 특정 레코드에 updaete가 발생하면 기존 레코드는 삭제 표시를 하게되고 변경된 데이터는 새로운 레코드로 추가된다.
+        + 파일 사이즈가 증가되는 단점
+    + UNDO
+      + ORACLE, MySQL에서 사용하는 방법으로 최선버전의 데이터는 데이터베이스에 저장하고 이전 버전의 데이터는 UNDO영역에 저장되어 사용되는 방법
 + 일관된 읽기 (Consistent Read)
   + InnoDB에서 MVCC를 통해 다른 트랜잭션이 가지는 Lock을 기다리지 않고 읽기 작업을 수행할 수 있는것.
   + 특정 트랜잭션이 레코드를 변경중일때 Lock이 걸리게 된다. 하지만 MVCC에 의해 UNDO영역에 다른 버전의 레코드가 관리되고 있기 때문에 해당 Lock을 기다리지 않고 SELECT작업을 수행할 수 있는것.
-
 + 격리성 수준
   + Repeatable Read
-    + MVCC에 의해 consistent read를 하여 다른 lock에 영향없이 일관된 읽기가 가능하다 (non reapeatable read 해결)
+    + InnoDB에서는 consistent read를 통해 첫번째 SELECT로 데이터를 읽어올때, 해당 시점의 데이터 snapshot을 찍어놓고 해당 shnapshot을 통해 읽어오기 때문에 lock없이 일관된 읽기가 가능(non repeatable read 해결)하고 팬텀리드가 발생하지 않는것이다.
     + update 시에는 다른 트랜잭션이 수정한 값이 적용되어 보이게된다. 이는 다른 트랜잭션에 의해 해당 데이터가 수정되었음에도 이전 snapshot을 사용하는 것은 정합성이 깨지기 때문에 row에 대한 consistent read를 초기화하고 최근 상태의 row를 보여주게 된다. (update한 row를 제외한 나머지 row는 모두 snapshot)
-
   + Read Commited
     + 첫 Read operation에서 찍은 snapshot만 사용하는 Repeatable Read와 달리, Read Commited는 Read operation을 수행할때마다 snapshot을 찍는다. 때문에 Read operation시점마다 새로 commit된 데이터가 보이게된다.
-
   + Read UnCommited
   + Serializable
 
@@ -627,9 +692,17 @@
   + DML이 자주 발생하지 않는 테이블
   + where절에 많이 사용하는 컬럼
   + join이 자주사용되는 외래키
+    + 1대1 매핑 FK일때는 클러스터, 논클러스터 아무거나 사용해도 가능
+    + 1대N 매핑 FK일때는 클러스터 인덱스를 사용하는 것이 좋다.
+      + 동일한 FK의 블럭을 찾는것이기 때문에 FK로 인덱스가 생성되었다면 블럭도 해당 FK로 정렬되어있기 때문에 클러스터 인덱스를 사용하는것이 효율적
   + 카디널리티가 높은 컬럼
-  + 선택도가 낮은 컬럼
-    + 
+    + 어떤 테이블의 레코드 수가 총 100개일때 성별(남,녀)의 카디널리티는 2, 주민번호의 카디널리티는 유니크한 값이기 때문에 카디널리티가 100이된다.
+      즉, 성별보다는 주민번호의 카디널리티가 높기때문에 주민번호를 인덱스로 설정하는것이 좋다.
+    + 뇌피셜 : distinct(특정 컬럼)
+  + 선택도가 높은 컬럼
+    + 데이터 집합에서 특정 값을 얼만큼 잘 골라낼수 있는지에 대한 지표
+    + 카디널리티 / 테이블 총 row * 100
+    + 카디널리티가 높다 == 중복도가 낮다 == 선택도가 높다
   + 크기가 큰 테이블
 + 주의사항
   + between, like, <, > 등의 범위 조건에 사용된 컬럼은 인덱스를 타지만, 그 뒤의 인덱스 컬럼은 인덱스로 사용되지 않는다.
@@ -784,6 +857,8 @@
 + Non-Cluster 인덱스
   + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/194694432-8b08b7db-14f5-4460-8c91-f958c8e89fb3.png">
 
+  + <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/194705341-e3248038-2f38-4dd2-b3a5-a8073d485152.png">
+
   + 생성 : `  CREATED INDEX [인덱스 이름] ON [테이블 이름] ON ([인덱스 컬럼1],[인덱스 컬럼2])`
 
   + Root, Intermediate, Leaf로 구성되어있으며 Leaf Page와 Data Page가 각각 분리되어있다.
@@ -909,6 +984,75 @@
 
 -----------------------
 
+### MySQL 실행 과정
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+<img width="550" alt="image" src="https://user-images.githubusercontent.com/57162257/194710335-5380f285-bced-4441-ba83-41fad609cdac.png">
+
+1. MySQL에 있는 Connection API가 요청을 받고 SQL요청을 받고 MySQL엔진 내부에 전달한다
+2. Query Parser가 요청된 SQL을 트리 형태 구조로 만들고 문법 오류를 검출한다.
+3. PreProcessor에서 트리 형태로 변경된 SQL의 특정 컬럼과 테이블 등의 존재 여부를 확인한다.
+4. Optimizer가 SQL문을 최적의 처리 경로를 찾는다.
+5. 실행 엔진이 Storage Engine에 처리를 요청
+6. Storage Engine (MyISAM, InnoDB)이 직접 쿼리 내용 수행 (결과 반환, 데이터 삽입)
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Index 작동 원리
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+1. SQL 파싱을 마친 후 DB Buffer Cache에 조건 컬럼이 있는지 확인한다.
+   - DB Buffer Cache는 데이터를 읽고 수정하기 위해 디스크에 존재하는 블럭을 읽어 저장하는 메모리 공간
+   - <img width="300" alt="image" src="https://user-images.githubusercontent.com/57162257/194710279-7a18b285-2343-4edc-aa7b-8d592ca466dc.png">
+2. DB Buffer Cache에 정보가 없다면 하드 디스크 파일에서 조건 컬럼을 가진 블럭(Page)를 복사해서 DB Buffer Cahce로 가져와서 해당 블럭만 사용자에게 보여준다.
+
+이때 Index의 여부에 따라 과정이 달라지게 된다.
+
+- Index가 없는 경우
+  - 어떤 블럭에 조건 컬럼이 존재하는지 모르기때문에 모든 블럭을 읽어와서 DB Buffer Cache에 복사한 후 하나하나 찾는다.
+- Index가 있는 경우
+  - WHERE 절의 컬럼에 대한 INDEX가 있는지 확인한 후, 인덱스에서 해당 컬럼을 가지고 있는 블럭의 위치를 파악하고 해당 블럭에서만 블럭을 가져와 DB Buffer Cache에 복사하여 저장하고 사용자에게 보여준다.
+  - 클러스터 인덱스에서는 Leaf Page에서 데이터를 가져온다.
+  - 논클러스터 인덱스에서는 RID를 통해 Data Page에서 데이터를 가져온다.
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### 옵티마이저
 
 <details>
@@ -931,6 +1075,10 @@
     + 실행 속도가 빠른순으로 우선순위를 정하고, 우선순위가 높은 방법을 채택하는 방법
     + 우선순위 : 처리 경로를 선정하기 위한 우선순위로서, 인덱스구조, 연산, 조건절이 순서를 결정짓는 요소
       - ROWID를 사용한 단일 행, 클러스터 조인을 사용한 단일 행, 복합 컬럼 INDEX, 단일 컬럼 INDEX, FULL TABLE SCAN 등의 순서로 우선순위를 선정한다.
+      - MySQL에서의 옵티마이저는 아래의 경우 Full Table Scan을 수행한다
+        - 테이블의 레코드 개수가 너무 적을 경우.
+        - WHERE절이나 ON절에 이용할 적절한 조건이 없는 경우
+        - Index Range Scan을 해도 조건에 일치하는 레코드가 너무 많은 경우
 
   + 비용 기반 옵티마이저 (Cost Base Optimizer - CBO)
     + 비용을 기반으로 최적의 처리경로를 선택하는 방법
