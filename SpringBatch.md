@@ -139,11 +139,20 @@
 - 기본 Spring에서 제공하는 bean scope는 Singletone으로 애플리케이션 실행시점에 빈을 생성하여 사용한다. Spring batch에서는 애플리케이션 실행 시점이 아닌 호출 시점까지 Bean의 생성을 지연시키는 @JobScope와 @StepScope가 있다.
 - Spring의 request scope처럼 요청시에 빈이 생성된다.
 - 사용 이유
-  - Step에서 Tasklet이 있고 해당 Tasklet이 지역변수를 가지고 있고 이 지역변수를 변경하는 작업을 하는 경우, 해당 Tasklet를 SingleTone으로 빈을 생성하게 되면 병렬적으로 처리할때 다른 곳에서 Tasklet을 사용할때 데이터가 엉키게 된다.
-    그렇기 때문에 호출 시점에 빈을 생성하게 되면 각 Step은 별도의 Tasklet을 가지고 작업을 수행하기때문에 다른 Tasklet에 영향을 미치지 않게 된다.
-  - Batch 컴포넌트에에 동적인 파라미터를 전달하는 JobParmeter는 지정한 scope의 bean이 실행되는 시점에 호출되게 된다.
-    그렇기 때문에 singletone으로 생성된 Batch 컴포넌트에 JobParameter를 선언하게 되면 "not found jobparameter" 가 발생하기 때문에 실행되는 시점에 bean을 생성하는 @JobScope와 @StepScope가 지정된 Batch 컴포넌트에 JobParameter를 선언하여 사용할수 있다.
+  - 동일 컴포넌트 병렬처리 또는 동시처리 가능
+  
+    - Step에서 Tasklet이 있고 해당 Tasklet이 지역변수를 가지고 있고 이 지역변수를 변경하는 작업을 하는 경우, 해당 Tasklet를 SingleTone으로 빈을 생성하게 되면 병렬적으로 처리할때 다른 곳에서 Tasklet을 사용할때 데이터가 오염 된다.
+      그렇기 때문에 호출 시점에 빈을 생성하게 되면 각 Step은 별도의 Tasklet을 가지고 작업을 수행하기때문에 다른 Tasklet에 영향을 미치지 않게 된다.
 
+  - Late Binding
+  
+    - JobParameter는 애플리케이션 실행시점에 꼭 할당하지 않아도 특정 시점에 자유롭게 할당시킬수 있다. 그렇기 때문에 JobParameter를 Job이나 Step에서 사용할때 언제 할당될지 모르기 때문에 지정 scope가 실행될때까지 Bean생성을 지연시켰다가 JobParameter를 바인딩 하여 사용한다.
+  
+      만약, 미리 Application실행시점에 Bean을 등록해 놓는다면 JobParameter는 아직 바인딩이 안되어있는 상태이기 때문에 jobparameter를 찾을수 없다는 에러를 발생시킨다. (뇌피셜)
+  
+    - Batch 컴포넌트에 동적인 파라미터를 전달하는 JobParmeter는 지정한 scope의 bean이 실행되는 시점에 호출되게 된다.
+      그렇기 때문에 singletone으로 생성된 Batch 컴포넌트에 JobParameter를 선언하게 되면 "not found jobparameter" 가 발생하기 때문에 실행되는 시점에 bean을 생성하는 @JobScope와 @StepScope가 지정된 Batch 컴포넌트에 JobParameter를 선언하여 사용할수 있다. (추상적 대답)
+  
 - 주의 사항
   - @JobScope나 @StepScope가 지정된 Batch 컴포넌트는 반환되는 타입을 프록시 객체로 감싸서 반환하게 된다. 그렇기 때문에 인스턴스를 반환하게 되면 인스턴스가 가지고 있는 메소드를 오버라이딩하여 사용되기 때문에 해당 Batch 컴포넌트에서 반환되는 값을 가지고 사용하는 곳에서 NPE과 같은 에러를 발생시킬수 있습니다.
     그렇기 때문에 scope를 지정한 Batch 컴포넌트에서는 구현체를 반환 타입으로 지정해줘야 한다.
@@ -318,9 +327,14 @@
 - JPA로 paging 기능을 제공하는 ItemReader
 - ItemReader 생성시 EntityManager를 추가로 선언해야한다.
 - 과정
-  1. doRead() 호출
+  1. ChunkProvider의 provider에서 chunk size만큼 doRead() 호출
+     - AbstractItemCountingItemStreamItemReader (추상클래스).doRead()이 호출되고 해당 메소드는 PagingItemReader의 추상클래스인 AbstractPagingItemReader의 doRead()를 호출한다.
   2. read가 처음이거나 다음 페이지를 호출해야하는 경우 doReadPage() 호출
+     - AbstractPagingItemReader (JpaPagingItemReader 부모클래스)
   3. doReadPage()에서 추가적인 조회 쿼리를 요청하여 결과를 전부 저장한다.
+- PagingItemReader를 수행할때, chunk size = page size를 동일하게 하였다면, 처음 doRead()로 데이터를 읽어올때 doReadPage()에서 한번의 쿼리로 요청 데이터를 모두 읽어온다.
+  그 후, results에 모든 데이터를 저장해놓고 chunk size만큼 chunkProvider에서 doRead()를 요청하는데, 쿼리를 반복해서 요청하는 것이 아닌, 처음에 저장해놓은 results를 캐싱해놓고 캐싱된 결과를 index로 chunk size가 될때까지 하나하나 읽어오는 것이다.
+  즉, doRead()는 chunk size만큼 호출되지만 한번의 쿼리로 결과를 캐싱해놓고 읽어오는것.
 - 주의할 점
   - JpaPagingItemReader는 추가 페이징 쿼리를 요청할때 독자적인 트랜잭션을 사용하기 때문에 페이징 처리 후 트랜잭션을 초기화 한다.
     그렇기 때문에 여러개의 페이징 쿼리가 생성되었을 때, 마지막 쿼리를 제외하고 앞의 쿼리에서는 트랜잭션 세션이 종료되어 lazy 로딩이 불가능하다. (chunk단위 트랜잭션은 보장)
@@ -507,6 +521,92 @@
   - retry() : 선언 예외 발생시 재시도
   - retryLimit() : 선언 횟수만큼 retry 발생시 실패처리
   - noRetry() : 해당 예외발생시 예외 발생
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Job 실행 과정
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
+1. JobLauncher
+
+   1. SimpleJobLauncher
+      1. 주어진 Job과 JobParameter를 가지고 JobRepository를 통해 최근 jobExecution을 요청한다
+      2. jobExecution을 통해 JobExecution의 status의 상태를 체크하여 유효성 검사를 수행한다.
+      3. JobParameter 유효성 검사
+         - 동일한 JobInstance에 대해서는 동일한 JobParameter금지 (Job 중복 실행 방지)
+      4. JobRepository를 통해 새로운 JobExecution 생성
+      5. TaskExecutor를 통해 Runnable로 실행되는 Job을 실행시킨다.
+         - job.execute(jobExecution)
+
+2. Job
+
+   1. AbstractJob
+      1. JobLauncher에게 전달받은 JobExecution에서 JobParameter의 유효성 검사.
+      2. JobExecution상태가 STOPPING이 아니라면 STARTED로 변경하고 Job 구현체 호출
+         - SimpleJob의 doExecute(JobExecution execution)
+      3. Job을 모두 완료했다면 JobRepository를 통해 해당 JobExecution을 업데이트한다.
+   2. SimpleJob
+      1. 전달받은 JobExecution의 Step을 찾아서 StepHandler에게 전달한다.
+         - handleStep(step, execution)
+      2. StepHandler를 통해 마지막 StepExecution을  통해 JobExecution의 상태를 업데이트한다.
+
+3. StepHandler
+
+   1. SimpleStepHandler
+      1. Step과 JobExecution을 받아와서 Step의 최신 정보 StepExecution을 JobRepository를 통해 받아온다.
+      2. StepExecution의 정보를 통해 실행가능하다면 새로운 StepExecution과 StepExecutionContext를 생성한다.
+      3. step을 호출한다.
+         - step.execute(currentStepExecution)
+      4. StepExecution결과를 JobRepository를 통해 저장한다.
+
+4. Step
+
+   1. AbstractStep
+
+      1. 전달받은 StepExecution의 STATUS를 STARTED로 변경하고 EXITSTATUS를 EXECUTING으로 변경한다.
+      2. 상태가 변경된 StepExecution을 구현체인 Step을 호출한다.
+         - doExecute(stepExecution)
+
+   2. TaskletStep
+
+      - Chunk지향 배치 작업을 할때는 TaskletStep을 사용한다.
+      - 해당 Step에서는 트랜잭션 단위로 Tasklet을 수행한다.
+
+      1. TransactionTemplate를 만들고 ChunkTransactionCallback을 통해 작업을 수행한다.
+         - TaskletStep의 doInTransaction이 호출되고 내부적으로 tasklet을 호출한다.
+           - tasklet(contribution, chunkContext)
+
+5. Tasklet
+
+   1. ChunkOrientedTasklet
+
+      - Tasklet의 구현체중 하나로서, Chunk지향 처리의 전체 로직을 다루는 클래스
+
+      1. ChunkProvider
+         1. ChunkProvider.provide()를 통해 읽기 작업 수행
+         2. SimplChunkProvider에서 ChunkSize만큼 ItemReader를 통해 Item을 읽어온다.
+      2. ChunkProcessor
+         1. ChunkSize만큼 Item을 읽어왔다면 ChunkProcessor.process()를 통해 변경과 쓰기 작업을 수행
+         2. transform을 통해 ItemProcesser를 수행
+         3. write를 통해 chunk단위만큼 읽어온 Item을 ItemWriter를 통해 쓰기작업을 수행한다.
 
 
 </details>
