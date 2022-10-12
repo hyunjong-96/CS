@@ -100,16 +100,22 @@
 
 -----------------------
 
-- <img width="751" alt="image" src="https://user-images.githubusercontent.com/57162257/186843894-bf1cf711-08b7-4f4a-9ece-a2f9c340f5a5.png">
-- Job
-  - 하나의 배치 작업
+- Architecture
+  - Application
+  - Core
+  - Infrastructure
+- 구조
+  - <img width="751" alt="image" src="https://user-images.githubusercontent.com/57162257/186843894-bf1cf711-08b7-4f4a-9ece-a2f9c340f5a5.png">
+  - Job
+    - 하나의 배치 작업
 
-- Step
-  - Job에서의 작업 단계
+  - Step
+    - Job에서의 작업 단계
 
-- Tasket
-  - Step에서 실질적 작업을 다루는 부분으로 하나의 정의된 작업만 수행한다.
-  - Step은 작업을 한곳에서 수행하는 Tasklet이 있고 작업을 역할별로 분리한 Reader, Processor, Writer로 구성된 Tasklet이 있다.
+  - Tasket
+    - Step에서 실질적 작업을 다루는 부분으로 하나의 정의된 작업만 수행한다.
+    - Step은 작업을 한곳에서 수행하는 Tasklet이 있고 작업을 역할별로 분리한 Reader, Processor, Writer로 구성된 Tasklet이 있다.
+
 
 
 </details>
@@ -607,6 +613,172 @@
          1. ChunkSize만큼 Item을 읽어왔다면 ChunkProcessor.process()를 통해 변경과 쓰기 작업을 수행
          2. transform을 통해 ItemProcesser를 수행
          3. write를 통해 chunk단위만큼 읽어온 Item을 ItemWriter를 통해 쓰기작업을 수행한다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Spring Batch Multi Thread
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+
+-----------------------
+
+- AsyncItemProcessor / AsyncItemWriter
+  - <img src ="https://velog.velcdn.com/images/hyunjong96/post/f1c0d9f7-a4d0-4cf4-bc03-7bf5397c3f0f/image.png" width="60%">
+  - ItemProcessor에게 별도의 스레드가 할당되어 작업을 처리하는 방식
+  - 과정
+    1. ItemReader가 Chunk단위의 Items를 AsyncItemProcessor에게 전달
+    2. AsyncItemProcessor가 ItemProcessor에게 작업을 위임
+       1. AsyncItemProcessor는 TaskExecutor로 비동기 실행을 위한 스레드를 생성하고 해당 스레드는 FuturTask실행
+       2. FuturTask는 Callback 인터페이스를 실행하며 그 안에서 ItemProcessor가 작업 처리
+    3. AsyncItemProcessor를 실행하는 동안 메인 스레드는 AsyncItemWriter를 실행하고 AsyncItemWriter는 작업을 ItemWriter에게 위임
+       - ItemWriter는 `List<Futur<T>>`를 전달받는데 해당 결과(비동기 작업 by AsyncItemProcessor)를 전달받기 까지 대기 한 후 write 작업을 수행한다.
+
+- Multi Thread Step
+  - <img src="https://velog.velcdn.com/images/hyunjong96/post/a7b343f4-0ebf-4d95-9293-5238218749b5/image.png" width="70%">
+  - Step내의 Chunk구조인 ItemReader, ItemProcessor, ItemWriter마다 여러 스레드가 할당되어 실행되는 방식
+    즉, Step내에 멀티스레도 Chunk기반 처리가 이루어지는 구조
+  - StepBuilder시 멀티 스레드 사용을 위해 TaskExecutor를 선언해주고 throttleLimit으로 멀티 스레드에 사용할 스레드 개수를 
+  - StepBuilder시
+  - 과정
+    1. Step실행시 TaskExecutionRepeatTemplate 반복자를 이용해서 RepeatCallBack을 실행
+    2. RepeatCallBack은 그 안에서 ChunOrientedTasklet을 반복적으로 실행한다.
+  - 주의사항
+    - ItemReader와 ItemWriter는 Thread-Safe한 구현자를 사용해야한다.
+      - 스레드마다 중복 데이터를 읽지 않도록 동기화가 보장되어야한다.
+      - PagingItemReader는 thread-safe하지만 CursorItemReader는 thread-safe하지 않다.
+      - JpaItemWriter, HibernateItemWriter, JdbcBatchItemWriter는 thread-safe
+      - Thread-Safe하지 않은 ItemReader사용시 중복된 데이터를 읽어오고 예상한 결과를 보장할 수 없다.
+        - `SynchronizedItemStreamReader`을 thread-safe하지 않은 ItemReader를 감싸서 사용하게 되면 Read작업이 synchronized메소드에 감싸져 호출되기 때문에 동기화된 읽기가 가능해진다.
+
+    - ItemReader설정시 saveState() 옵션을 false로 선언해야한다.
+      - saveState(true)시 실패지점을 저장하고 재시작이 가능하게 한다.
+      - 단일스레드로 작업시 10개의 데이터가 있을때 8번째 작업에서 실패시 이전 7번째 데이터까지는 정상 처리되었다는 뜻이기 때문에 8번째 데이터부터 재실행이 가능하다.
+      - 하지만 멀티스레드 작업시 Chunk를 개별적으로 수행하기 때문에 이전 데이터가 정상 처리 여부를 알 수 없기때문에 실패지점 저장시 재실행지점이 오염될 수 있습니다.
+
+- Parallel Step
+  - <img src="https://velog.velcdn.com/images/hyunjong96/post/3e927114-d5ba-46f3-865b-923286636306/image.png" width="70%">
+  - 여러 Step을 SplitState를 통해 각 Flow(Step)에 스레드를 할당하여 병렬적으로 처리해주는 방식
+
+- Partition
+  - Master/Slave방식으로 Master가 데이터를 파티셔닝하고 각 파티션에게 스레드를 할당하여 Slave가 독립적으로 작동하는 방식
+
+- Remote Chunking
+  - 분산 환경처럼 Step처리가 여러 프로세스로 분할되어 다른 외부 서버로 전송되어 처리하는 방식
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 반복 및 오류 제어 (Repeat)
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+
+-----------------------
+
+- https://velog.io/@backtony/Spring-Batch-%EB%B0%98%EB%B3%B5-%EB%B0%8F-%EC%98%A4%EB%A5%98-%EC%A0%9C%EC%96%B4
+- SpringBatch는 특정 조건이 만족할때까지 Job또는 Step을 반복하도록 애플리케이션을 구성할 수 있다.
+- Step과 Chunk의 반복을 RepeatOperation을 통해 처리
+- 기본 구현체는 RepeatTemplate
+- 구조
+  - <img width="760" alt="image" src="https://user-images.githubusercontent.com/57162257/195257827-3e915830-12c8-4d0b-9e75-71c5e26675c9.png">
+  - Step은 RepeatTemplate을 사용해서 Tasklet을 반복적으로 사용
+  - ChunkOritentedTasklet은 내부적으로 ChunkProvider를 통해 ItemReader를 읽어오는데 RepeatTemplate를 통해 Chunk size만큼의 데이터를 반복적으로 읽어오게 한다.
+
+- 반복 결정 여부 항복
+  - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/195258314-be10b846-acda-4329-9ec2-906d58108602.png">
+  - ExceptionHandler
+    - RepeatCallback내부에서 예외가 발생하면 RepeatTemplate는 ExceptionHandler를 참조하여 예외를 던질지, 말지 결정
+    - 예외를 받아 던지게 된다면 반복이 종료되고 비정상 종료가 된다.
+    - 구현체
+      - SimpleLimitException : (default) 예외타입이 발생할때마다 카운터가 증가하고 선언한 한계(limit)초과시 예외를 던진다.
+      - LogOrRethrowException : 예외를 로그에 기록할지 던질지 결정
+
+  - CompletionPolicy
+    - RepeatTemplate의 iterate에서 반복을 중단할지 결정하는 정책
+    - CompletionPolicy로 반복이 중단된다면 정상적인 종료로 처리
+    - 여러 정책이 있는 경우 먼저 만족되는 것이 있다면 종료된다.
+    - 구현체
+      - SimpleCompletionPolicy : (default) 특정 반복 횟수가 넘어가게 되면 반복 종료
+      - TimeoutTerminationPolicy : 특정 시간이 소요되면 종료
+      - CountingCompletionPolicy : 일정 횟수 또는 계산 조건을 만족하면 종료
+
+  - RepeatStatus
+    - 해당 작업 처리가 끝났는지 판별하기 위한 Enum
+    - CONTINUABLE : 작업이 남아있음
+    - FINISHED : 더이상의 반복 없음
+
+- FaultTolerant
+  - 작업 중 오류가 발생해도 Step이 즉시 종료되지 않고 Retry또는 Skip기능을 활성화 함으로서 내결함성 서비스가 가능하다.
+    - 내결함성  : 일부 구성요소가 동작하지 않아도 계속 작동할 수 있는것.
+    - Skip
+      - ItemReader, ItemProcessor, ItemWriter
+
+    - Retry
+      - ItemProcessor, ItemWriter
+
+  - <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/195259789-0bd47092-e035-455d-971a-0ad6a5720b13.png">
+  - Skip
+    - <img width="797" alt="image" src="https://user-images.githubusercontent.com/57162257/195261882-cb611c73-5eb3-40f3-aa04-16703341ea40.png">
+    - 데이터를 처리하는 동안 설정된 Exception이 발생했을 경우, 해당 데이터 처리를 건너뛰는 기능
+    - ItemReader
+      - Item을 한건씩 읽어오다가 예외 발생시 해당 Item을 skip하고 다음 item을 읽는다.
+
+    - ItemProcessor
+      - item을 처리하다가 예외가 발생하면 Chunk의 첫 단계로 돌아가 ItemReader에게 Items을 다시 요청한다.
+      - 이때 ItemReader는 다시 데이터를 읽어오는 것이 아니라 캐시에 저장되어있는 Items를 다시 보내준다.
+      - 다시 Items를 받아온 ItemProcessor는 처음부터 작업을 수행하고 이전에 실패했던 Item에 대해서는 처리하지 않고 넘어간다.
+
+    - ItemWriter
+      - item을 처리하다가 예외가 발생하면 Chunk의 첫 단계로 돌아가 ItemReader에게 Items를 다시 요청한다.
+      - 캐싱된 Items를 ItemProcessor에게 넘긴다.
+      - 예외 발생 후에는 ItemProcessor에서 전부 처리하고 ItemWriter에게 넘겨주는 것이 아닌 개별로 한개씩 ItemWriter로 보낸다.
+
+  - Retry
+    - <img width="778" alt="image" src="https://user-images.githubusercontent.com/57162257/195261912-d12c3a55-0219-42c4-b808-58b5df8079f4.png">
+    - ItemProcessor, ItemWriter에서 설정된 Exception이 발생했을 때, 지정한 정책에 따라 데이터를 재시도하는 기능.
+    - 예외 발생시 Chunk의 처음부터 다시 시작
+    - Retry Count는 Item마다 각각 가지고 있다.
+    - RetryLimit횟수 이후에도 재시도가 실패한다면 recover에서 후속작업을 처리할 수 있다.
+    - ItemPrcessor
+      - ItemProcessor에서 예외 발생시 Chunk단계의 처음부터 다시 시작
+      - ItemReader는 캐시된 Items를 다시 ItemProcessor에게 전달
+
+    - ItemWriter
+      - ItemWriter에서 예외 발생시 skip과 다르게 List로 한번에 받아 처리한다.
 
 
 </details>
