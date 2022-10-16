@@ -259,9 +259,17 @@
   + 구현하고자 하는 객체들의 상호작용을 프로그래밍 하는 방법
   + 상속, 다형성, 캡슐화, 추상화를 통해 결합도를 낮추고 응집도를 높일 수 있으며, 코드 재사용률을 높일 수 있다.
 + 함수형 프로그래밍
-  + 문제를 함수들의 정의와 조합을 통해서 해결하는 프로그래밍
-  + 함수의 개념을 최우선적으로 사용해서 모든 문제를 해결하는 프로그래밍
-  + 순수 함수들로 작성하여 모듈성이 증가하여 재사용률이 높아지고 반복개발이 쉬워진다.
+  + 문제를 해결하기 위해 함수를 정의하고 조합해서 해결하는 프로그램.
+  + 순수함수들로 작성하여 모듈성이 증가하여 재사용률이 늘어나고, 메인코드의 가독성이 높아진다.
+  + 순수함수를 통해 동시성 문제를 해결할 수 있다.
+  + 순수함수
+    + 입력값으로만 결과를 반환하는 함수
+    + 동일한 입력값에는 동일한 출력값을 보장한다.
+    + 함수 자체가 독립적이고 외부환경에 영향을 받지 않아 Thread-safe하여 병렬처리를 동기화 없이 사용가능
+  + 1급객체
+    + 변수나 데이터구조에 담을 수 있는 객체
+      즉, 파라미터로 전달 할 수 있고, 반환값으로 전달할 수 있는 객체
+    + 함수형 프로그래밍에서 함수를 1급객체 취급하기 때문에 함수를 유연하고 다양하게 사용가능.
 
 
 
@@ -443,10 +451,12 @@
 + 사용되지 않는 Heap영역의 객체를 메모리 해제하여 메모리를 관리하는 역할
 + GC 종류
   + Serial GC : 하나의 스레드로 GC 수행
+    + 적은 메모리와 적은 CPU코어에 적합
   + Parallel GC : java 8의 default GC, 여러 스레드로 GC 수행
     + 의도적으로 GC를 수행해야한다.
     + 애플리케이션과 GC가 병렬 수행
     + Age bit = 15
+    + 다수의 스레드로 GC가 수행되기 때문에 메모리가 충분하고 코어가 많을때 사용
   + G1 GC : java 9의 default GC, Heap을 여러 영역으로 나누어 GC 수행
     - <img width="304" alt="image" src="https://user-images.githubusercontent.com/57162257/187113600-2594d63f-9214-4cf4-835e-814379d7f7fb.png">
     - young, old generation 영역을 명확하게 구분하는 전통적 heap과 다르게 eden, survivor, old, unused등의 작은 region으로 나누어져있다.
@@ -457,14 +467,20 @@
       - young, old영역을 전체 탐색하는 것이 아닌, 특정 영역에 메모리가 많이 차있는 영역을 인식하여 GC를 수행함으로써 처리 속도가 빠르고 빠르게 빈 공간을 확보하기 때문에 GC의 빈도도 낮아진다.
     - 단점
       - Major, minor GC가 발생해도 공간이 부족한 경우 싱글 스레드로 Full GC(stop the world)가 발생하여 GC 처리 속도가 느리다.
++ Stop the World
+  + GC를 실행하는 스레드를 제외한 스레드의 실행을 멈추어 JVM 애플리케이션 실행이 멈추는것.
+
 + GC 알고리즘
   + Reference Count
     + 객체를 참조하는 개수를 나타내는 reference count가 0이라면 GC의 대상이되는 알고리즘
     + 두 객체가 서로를 참조한다면 reference count가 영구적으로 1이되기 때문에 GC의 대상이 되지않는 문제가 발생할 수 있다.
-
   + Mark and Sweep
-    + root space 에서 부터 해당 객체에 접근가능한 객체는 `Mark`, 접근이 불가능한 객체는 GC의 대상이되어 삭제(`Sweep`)
-      + root space : stack의 지역변수, method area의 static 변수, native method statck의 JNI참조
+    + root space 에서 부터 그래프 순회하여 해당 객체에 접근가능한 객체는 `Mark`, 접근이 불가능한 객체는 GC의 대상이되어 삭제(`Sweep`)
+      + 루트로 부터 연결된 객체 : Reachable
+      + 연결되지 않은 객체 : UnReachable
+      + 객체를 삭제하고 파편화를 막기위해 정리하는 것을 Compaction
+      + root space : stack이나 static 공간에 선언된 변수들 즉, stack의 지역변수, method area의 static 변수, native method statck의 JNI참조
+    + 의도적으로 GC를 실행시켜야한다, 애플리케이션 실행과 GC실행이 병행된다.
 + GC 동작과정
   1. Young Generation의 Eden영역이 포화상태가 된다.
   2. Mark and Sweep 실행(Minor GC)
@@ -472,6 +488,21 @@
   4. survival 0영역이 포화되면 Minor GC 실행후  survival 1로 이동
   5. 살아남은 횟수 age가 일정 횟수가 된다면 Old Generation 영역에 저장된다.
   6. Old Generation이 포화상태가 되면 Major GC발생.
++ Reference Type
+  + GC가 Reachable / UnRechable을 판단하는데 개발자가 컨트롤 할수 있게 해주는 type
+  + Strong Reference
+    + `Object obj = new Object()`
+    + Thread stack이 직접적으로 Object에 접근 가능한 상태
+    + null을 대입하지 않는 이상 gc대상으로 취급받지 않는다.
+
+  + Weak Reference
+    + `WeakReference<Object> weakReference = new WeakReference<>(new Object()) `
+    + 항상 GC의 대상이 된다.
+
+  + Phantom Reference
+    + 올바르게 삭제하고 삭제 이후 작업을 조작하기 위한 타입
+    + finalize 메소드에 의해 컨트롤할 수 있다.
+
 + 장단점
   + 장점 : 메모리 누수 방지, 해제된 메모리 접근 방지
   + 단점 : GC가 언제발생할지 모름
@@ -556,10 +587,11 @@
 + String
   + <img width="50%" alt="image" src="https://user-images.githubusercontent.com/57162257/181692343-8d8792b1-09dd-40d1-ba6f-7460e64c84bc.png">
   + String 선언은 ""선언과 new String() 선언이 있다.
-  + ""선언은 Heap의 String Pool에 저장이되며 같은 value일 때 동일성 비교가 가능하다.
+  + ""선언은 리터 선언이며 Heap의 String Pool에 저장이되며 같은 value일 때 동일성 비교가 가능하다.
+    + 리터럴(literal) : 데이터 그 자체, 변수에 넣는 변하지 않는 데이터
   + new String()선언은 Heap의 Eden에 저장되며 같은 value라도 다른 참조 주소를 가지기때문에 동등성 비교를 해야한다.
   + 문자열 연산시 새로운 객체가 생성되어 저장되기 때문에 Heap메모리 관리에 치명적일수 있다.
-
+  
 + StringBuilder
   + StringBuilder는 new StringBuilder()로 선언하며 문자열 연산시 StringBuilder의 객체의 크기가 변할 뿐 새로운 객체가 생성되지 않아 메모리관리에 효율적이다.
   + 비동기화 처리
@@ -678,9 +710,13 @@
   + 장점
     + 컴파일 시점에 강력한 타입 검사
       + 선언한 타입 이외의 타입이 들어오게 되면 컴파일 에러 발생
-
     + 캐스팅 (타입 변환) 제거
       + 제네릭 타입을 사용하지 않게되면 Object로 데이터를 가져와 형 변환 과정이 추가되어야한다.
+
++ 종류
+
+  + 타입파라미터 T
+  + 와일드카드 ?
 
 + 공변과 불공변
 
@@ -904,7 +940,7 @@
 
 -----------------------
 
-### Java Collections
+### Java Collection
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -915,7 +951,13 @@
 
 <img width="70%" alt="image" src="https://user-images.githubusercontent.com/57162257/181880446-bea276d3-7c23-472a-9fc7-3d9946d27b25.png">
 
-여러 원소를 담을 수 있는 자료구조로 Set과 List는 Collection을 상속하고 Map은 Collections를 직접 상속받고 있다.
+여러 원소를 담을 수 있는 자료구조로 Set과 List는 Collection을 상속하고 Map은 Collection 프레임워크에서 Collection과 별도로 정의되어있는 인터페이스
+
+Collection Framework : 여러 원소를 저장하기 위한 프레임워크
+
+Collection : 연속되는 데이터를 저장하기 위한 인터페이스
+
+Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임워크와 밀접하게 동작하며 sort와 같은 기능을 제공해 Collection등의 자료구조를 다룰수 있게 도와주는 클래스
 
 - List : 데이터의 중복을 허용하고 순서를 보장하는 자료구조 (인터페이스)
   - ArrayList
@@ -957,11 +999,11 @@
   - HashTable
     - HashMap과 동일한 동작을 한다.
     - key와 value의 null을 비허용한다.
-    - 객체 자체에 락을 걸어준다 (synchronized)
+    - 객체 자체에 락을 걸어준다 (synchronized), 읽기쓰기 작업 모두 동기화
   - ConcurrentHashMap
     - HashMap과 동일한 동작을 한다.
     - key와 value의 null을 비허용한다.
-    - 조작하는 item에 대해서만 락을 걸어준다 (synchronized block)
+    - 조작하는 item에 대해 쓰기 작업에만 락을 걸어준다 (synchronized block)
 
 </details>
 
@@ -993,7 +1035,7 @@
     + HashTable에서의 모든 기능에 synchronized 처리 되어 해당 객체가 동기화 처리된다.
 
   + ConcurrentHashMap
-    + 어떤 아이템을 조작할때 해당 아이템에만 락만 걸기 때문에 멀티 스레드 환경에서 HashTable보다 효율이 좋다.
+    + 어떤 아이템을 조작(쓰기)할때 해당 아이템에만 락만 걸기 때문에 멀티 스레드 환경에서 HashTable보다 효율이 좋다.
 
 
 
@@ -1052,6 +1094,9 @@
 + Optional
 + 함수형인터페이스
 + 람다 표현식
++ Java8을 사용하는 이유
+  + Java8은 외부 개발 툴과 연결에 있어서 안정성이 보장되어있고 많은 기능들이 추가되었지만, 개발에있어서 큰 차이를 느끼지 못했기 때문에 안정성이 보장되어있는 java8 선택
+
 
 
 </details>
@@ -1148,6 +1193,7 @@
   + limit() : 연산 사이즈 제어
   + findFirst() : 연산 결과의 첫번째 요소를 반환 후 종료
   + findAny() : 병렬연산하여 아무값 반환 후 종료
+    + parallel 사용
   + anyMatch() : stream 요소 중 조건이 true인 요소가 있다면 종료
   + allMatch() : stream 요소 중 조건이 하나라도 false인 요소가 있다면 종료
   + nonMatch() : stream 요소 중 조건이 하나라도 true인 요소가 있다면 종료
@@ -1178,6 +1224,8 @@
 + 기본 타입인 데이터를 객체로 감싸주는 클래스로, 기본타입 데이터를 Wrapper Class 인스턴스의 value로 저장.
 + 동등성 비교를 통해 value를 비교해야 한다.
 + 사용 이유
+  + null값을 사용하기 위해
+  + 제네릭 타입을 사용하기 위해
   + Collection에서 객체를 사용하기때문이다.
   + 멀티 스레드에서 동기화 처리를 위해 객체가 필요하다.
 
@@ -1205,7 +1253,33 @@
 -----------------------
 
 + 박싱 : 기본 타입(char, int ...)을 wrapper class의 인스턴스로 변경하는 과정
+
 + 언박싱 : wrapper class의 인스턴스에 저장된 value를 기본 타입으로 꺼내는 과정
+
++ Integer boxing과 unboxing
+
+  + `Integer i = 127`은 컴파일 단계에서 `Integer i = Integer.valueOf(127)`을 수행한다. (Auto boxing)
+
+    + Integer.valueOf()를 사용하여 박싱을 할 경우 -128~127은 동등성 비교가 보장이 된다.
+
+    + Integer내부의 IntegerCache에는 -128~127까지의 Integer가 저장되어있어 해당 범위의 숫자를 사용하게되면 Cache에서 object를 가져와 반환해주기 때문에 동등성 비교가 보장된다.
+
+      + -128~127은 실제 개발에서 많이 사용되는 값이기 때문에 캐시를 해놓는다고 한다.
+
+    + ```java
+      Integer integer1 = 127;
+      Integer integer2 = 127;
+      
+      System.print(integer1 == integer2); //true
+      
+      Integer integer3 = 128;
+      Integer integer4 = 128;
+      
+      System.print(integer3 == integer4); //false
+      ```
+
+  + `Int c = i`은 컴파일 단계에서 `int c = i.intValue()`을 수행한다. (Auto unboxing)
+
 
 
 </details>
@@ -1322,8 +1396,9 @@
   + strip : 문자열 앞 뒤의 공백 제거
     + Java 8에는 trim이라는 공백 제거 함수가 있는데 \u200이하의 공백 문자만 제거해줄수있지만 java 11의 strip은 더 많은 공백문자열을 제거해줄 수 있다.
   + repeat(n) : 문자열을 n번 반복하여 반환
-+ Collection의 toArray()메소드를 오버로딩하는 메소드가 추가되어 원하는 타입의 배열을 선택하여 반환.
++ Collection의 toArray()메소드를 오버로딩하는 것이 추가되어 IntFunction이 추가되어 원하는 타입의 배열을 선택하여 반환. (String[]::new 와 같은 선언이 가능해짐)
   + <img width="514" alt="image" src="https://user-images.githubusercontent.com/57162257/181903621-6b0527b5-cddf-4fd7-b6e0-46202a0bd9ac.png">
+  + <img width="509" alt="image" src="https://user-images.githubusercontent.com/57162257/196023875-252c1fdb-d499-4adb-b864-f6b78eb57adf.png">
   + Java 8에서는 list.toArray(new String[0])으로 변경해주는데 파라미터로 넘겨주는 0은 만들 배열의 크기이다. 만약 list의 크기보다 넘겨주는 값이 더 크다면 반환되는 배열의 남은 공간에는 null로 나오게 된다.
 + 람다 표현식에서 지역변수에 var 사용이 가능해져 컴파일 시 타입을 추론하게 하고 타입에 사용할수 있는 어노테이션을 사용할 수 있다..
   + <img width="561" alt="image" src="https://user-images.githubusercontent.com/57162257/181903638-846ceb6c-6dc8-4294-bcc9-519a7b696492.png">
@@ -1492,10 +1567,14 @@
 + 멀티스레딩을 수행할 클래스는 Thread 클래스를 상속받아 run() 함수를 오버라이딩하여 로직을 수행한다.
   + 장점 : Thread 클래스의 기능을 사용할 수 있다.
   + 단점 : 다중 상속이 불가능 하다.
-
 + 멀티스레딩을 수행할 클래스는 Runnable 인터페이스를 상속받아 run()을 구현하여 Thread 생성자의 인수로 넘긴다.
   + 장점 : 재사용성이 높고 다른 클래스 상속이 가능하다.
   + 단점 : Thread클래스의 함수를 사용할 수 없다.
++ ExecutorService
+  + ExecutorService는 자바에서 스레드 풀을 이용하여 멀티스레드를 쉽게 사용할수있도록 도와주는 인터페이스
+  + execut(), submit()과 같은 메서드로 Runnable, Callable을 실행시켜준다.
+    + Callable인터페이스는 내부적으로 실행한 결과를 반환해줄 수 있다.
+
 
 
 
@@ -1620,7 +1699,8 @@
 -----------------------
 
 + 멀티 스레드 환경에서 여러 스레드로부터 동시에 접근이 이루어져도 각 스레드의 함수 수행결과가 올바르게 나오는 것.
-+ 방법
+
++ Thread Safe하게 동작하는 방법
   + Re-entrancy
     + 어떤 함수가 스레드에 의해 호출되어 실행중일때, 다른 스레드가 그 함수를 호출하더라도 그 결과가 각각 올바르게 주어져야한다.
 
@@ -1631,8 +1711,19 @@
     + 공유자원에 해당 자원의 접근을 뮤텍스, 세마포어 등으로 통제한다.
 
   + Atomic operations
-    + 공유자원 접근시, 원자적으로 정의된 접근 방법을 사용함으로써 상호배제를 구현할 수 있다.
+    + 공유자원 접근시, 원자적으로 정의된 접근 방법또는 연산방법을 사용함으로써 상호배제를 구현할 수 있다.
       + 데이터 변경이 일어나고 있는 시점에는 접근이 불가능하다.
+      
+      + ```java
+        int count = 0; //atomic operation
+        count++; //non atomic operation
+        	/*
+        	1. count변수를 불러온다
+        	2. count변수의 값을 증가시킨다.
+        	3. count변수에 변경된 값을 저장한다.
+        	count를 증가시키는 연산이 분리되어 적용되기 때문에 다른 스레드에 의해 값이 변경되었을때 올바른 값을 반환하지 못하는 문제가 발생할 수 있다.
+        	*/
+        ```
 
 
 
