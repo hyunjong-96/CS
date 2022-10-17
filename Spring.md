@@ -115,7 +115,8 @@
     - 환경 변화에 상관없이 일관된 방법으로 접근 환경을 제공하는 서비스 추상화 (Portable Service Abstraction)
     - Spring MVC의 @Controller, @RequestMapper 등.. 기존 서블릿을 구현할 때 httpservlet을 상속받아 doGet(), doPost()등의 메소드를 구현하고 요청 uri을 매핑하여 비즈니스 로직을 구현해야했지만, Spring MVC에서 제공해주는 어노테이션으로 이러한 과정을 추상화하여 개발자가 비즈니스 로직에 집중할 수 있도록 한다.
       또한 spring mvc코드를 두고 webflux의존성을 받도록 바꿔주기만 해도 tomcat이 아닌 netty기반으로 실행하게 할 수 있다.
-    - 마찬가지로 @Transactional도 JDBC를 사용하기 위해서는 connection과 트랜잭션 설정등의 row level의 과정을 거쳐야 했지만 이러한 과정을 추상화하여 개발자가 비즈니스 로직에 집중할 수 있도록 해준다.
+    - 마찬가지로 @Transactional도 데이터베이스를 사용하기 위해서는 connection이 필요한데, JDBC는 직접적으로 connection을 관리하지만, JPA는 EntityManager를 통해 간접적으로 관리하기 때문에 사용 기술에 따라 다르게 사용해야한다. 하지만 TransactionManager 추상화 계층에 의존함으로써 다른 기술을 사용해도 일관성있게 트랜잭션을 사용할 수 있고 트랜잭션 설정등의 row level의 과정을 거쳐야 했지만 이러한 과정을 추상화하여 개발자가 비즈니스 로직에 집중할 수 있도록 해준다.
+      - <img width="400" alt="image" src="https://user-images.githubusercontent.com/57162257/196101889-082e7169-856b-4136-b5a5-fab95778ab14.png">
 
 
 </details>
@@ -137,14 +138,11 @@
 <br />
 
 
-
-
-
-
 -----------------------
 
 - 특정 기술에 종속되지 않고 객체지향의 장점을 유지하는 순수한 형태의 자바
 - 특정 기술에 종속되게 된다면 가독성이 떨어져 유지보수에 어려움이 생기고 의존하게 된 자바코드는 확장성이 떨어져 객체지향성을 잃을 수 있다.
+- **객체지향적인 원리에 충실하면서, 환경과 기술에 종속되지 않아 상황에 따라 재활용 될수 있도록 설계된 오브젝트.**
 - Hibernate와 스프링이 대표적인 POJO 프레임워크
   - POJO 프레임워크 : POJO를 이용하면서 엔터프라이즈 서비스와 기술을 그대로 사용할 수 있도록 도와주는 프레임워크
 
@@ -837,7 +835,7 @@
 
   - View Resolver
     - view의 논리주소를 물리주소로 변환한다.
-    - 핸들러를 수행하고 받은 ViewAndaModel을 통해 view의 name으로 view를 찾고 model의 데이터를 view에 넣어준다.
+    - 핸들러를 수행하고 받은 ModelAndView을 통해 view의 name으로 view를 찾고 model의 데이터를 view에 넣어준다.
 
 - 실행
 
@@ -1313,6 +1311,97 @@
   - 모 테크 블로그 : Tn * (Cm - 1) +1
     - Tn : 총 스레드 개수
     - Cm : 하나의 Task에서 동시에 필요한 Connection 수
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### @Retention
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- Retention어노테이션은 적용된 어노테이션의 라이프사이클을 결정해주는 어노테이션이다. 즉, 어노테이션이 어느 시점까지 살아있을 것인지 정해주는 역할
+- RententionPolicy.SOURCE
+  - 어노테이션이 소스 코드(.java)시점까지 살아있고 컴파일시 사라진다.
+  - @Getter, @Setter 어노테이션에서 사용한다.
+  - @Getter나 @Setter어노테이션은 소스코드상에서는 존재하지만 컴파일 시점에 사라지게 되는데, 그냥 사라지는 것이 아닌 컴파일 후 클래스 코드(.class = 바이트코드)에서는 getter, setter 코드가 바이트 코드로 생성되어있다.
+
+- RetentionPolicy.CLASS
+  - 어노테이션이 클래스 코드(.class)까지 살아있는 정책.
+  - @NonNull과 같은 어노테이션등에 작용한다.
+    - @NonNull은 파라미터에 적용되면 메소드 앞부분이나 생성자 바디 부분에 파라미터 null을 체크하는 로직이 삽입되고, 필드에 사용되면 필드에 값을 할당하는 메소드에 null 체크로직을 삽입한다.
+
+  - **SOURCE나 RUNTIME에서 웬만하면 다 사용가능할텐데 CLASS정책이 있는 이유**
+    - GRADLE에서 다운받은 라이브러리와 같이 .jar로 저장된 라이브러리에는 소스 코드(.java)가 없고 `클래스 코드(.class)로만 이루어져 있다`. 그렇기 때문에  클래스 코드 상에서 존재하는 어노테이션 정보를 사용하기 위해 필요한 정책.
+
+- RetentionPolicy.RUNTIME
+  - 어노테이션이 런타임 시점까지 살아있다.
+  - @Component, @Entity 어노테이션등에서 사용한다.
+  - 해당 정책은 Reflection API등과 같이 런타임 시점에 실행되는 작업에 대해서 어노테이션 정보를 사용하기 위한 정책인데, 런타임 시점에 스프링 컨테이너에 빈을 생성하고 등록하기 위해 @Component어노테이션을 찾아 탐색하고 Reflection API를 통해 빈을 생성하기 위한 방법으로 사용된다.
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### RequestBody
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- RequestBody에는 Setter가 필요없다?
+
+  - Post를 통해 RequestBody를 받을 때, `Jackson2HttpMessageConverter`에서 Json을 `ObjectMapper`를 이용해 매핑을 시켜주기 때문에 Setter는 필요없다.
+
+  - Get에서는 Jackson2HttpMessageConverter가 아닌 `WebDataBind`에서 파라미터값을 받아준다. 이때, WebDataBind는 기본적으로 `initBeanPropertyAccess`메서드를 통해 파라미터와 객체를 매핑시켜주는데, 이는 `Java Bean`으로 등록해주기 때문에 Setter가 필요하게된다.
+
+  -  Get에서 Setter없이 파라미터를 객체로 매핑해주기 위해서는 `initDirectFieldAccess`로 빈 등록이 아닌 필드에 직접 접근해 할당하도록 한다.
+
+    - ```java
+      @Slf4j
+      @ControllerAdvice
+      public class WebControllerAdvice {
+      
+          @InitBinder
+          public void initBinder(WebDataBinder binder) {
+              binder.initDirectFieldAccess();
+          }
+      }
+      ```
+
 
 
 </details>
