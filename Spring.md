@@ -1142,6 +1142,112 @@
 
 -----------------------
 
+### 비동기
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- @Async
+
+  - Spring에서 스레드 풀을 이용해 비동기 작업을 지원해주는 방법
+  - @EnableAsync가 설정되어있어야 효과가 발생한다.
+  - 내부적으로 ThreadPoolTaskExecutor의 스레드를 할당받아 비동기 작업을 수행
+    - @Async가 ThreadPoolTaskExecutor를 별도로 명시하지 않으면 SimpleAsycnTaskExecutor에서 스레드를 할당받아오는데, 해당 TaskExecutor는 요청마다 스레드를 생성하기 때문에 지양한다.
+    - 사용자 지정 ThreadPoolTaskExecutor를 선언하고 사용할 TaskExecutor를 명시한다면 , 해당 ThreadPoolTaskExecutor에서 스레드를 할당받아 비동기 작업을 수행한다.
+    - 사용자 지정 TaskExecutor를 선언했다면 별다로 명시하지 않아도 TaskExecutor타입의 빈을 찾아서 자동으로 스레드를 할당시켜준다.
+
+  - 사용자 지정 ThreadPoolTaskExecutor를 빈으로 등록시켜주어야 @Async에서 스레드를 할당받을 수 있다.
+    - ThreadPoolTaskExecutor
+      - corePoolSize : 풀의 기본사이즈 (1)
+      - queueCapacity :  대기 상태의 task를 저장하는 큐 (Integer.MAX_VALUE)
+      - maxPoolSize : 풀의 최대사이즈 (Integer.MAX_VALUE)
+      - keepAliveSeconds :  corePoolSize를 넘거나 allowCoreThreadTimeout이 ture로 설정되어있다면, corePoolSize가 넘는 스레드는 설정한 시간이 넘게되면 삭제된다.
+      - allowCoreThreadTimeout : corePoolSize의 스레드도 삭제된다.
+
+- Thread의 종료 처리
+
+  - JVM은 자식 스레드가 실행되고 있거나 종료되지 않는다면, JVM을 종료할 수 없다.
+
+  - ExecutorService 사용시
+
+    - shutdown() : 새로 실행되는 task를 막는다. (실행중이던 task가 완료되면 종료)
+    - shutdownNow() : 현재 실행중인 task를 종료한다. (온전히 종료 작업이 수행되지 않을수도 있다.)
+    - awaitTermination() : 설정한 시간만큼 실행중인 task가 완료되길 기다리고, 설정한 시간이 넘어가게 되면 강제종료
+
+  - ThreadPoolTaskExecutor 사용시 (=@Async)
+
+    - keepAliveSeconds, allowCoreThreadTimeout을 설정하여 스레드가 안전하게 종료되도록한다.
+    - 빈의 초기화와 삭제 등을 정의하고 있는 DisposableBean인터페이스를 구현한 ExecutorConfigurationSupport클래스를 상속받고 있기 때문에, 애플리케이션 종료시 ExecutorConfigurationSupport.destroy()가 실행되어 실행중인 task를 안전하게 종료시켜준다.
+
+  - Spring Batch (Multithread-Step 사용시)
+
+    - Step에서 taskExecutor 적용시
+
+      - step에서의 taskExecutor설정은 TaskExecutor를 받게되는데 TaskExecutor에는 shutdown과 같은 메서드 없이 execute() 만 정의되어있어 다른 방법으로는 task가 종료되지 않는다.
+
+      - ```java
+        System.exit(SpringApplication.exit(SpringApplication.run(BatchApplication.class, args)));
+        ```
+
+        위처럼 main()메서드에 설정하게되면, 배치 작업이 끝날때까지 메인 스레드가 대기하였다가 jvm을 종료해주게 된다. 이는 실행되었던 작업이 성공적으로 실행되었다는 것을 보장한다.
+
+    - @Async 적용시
+
+      - @Async를 적용하게되면 spring batch와는 무관하게 비동기 작업이 수행되게 되고 spring container에서 ThreadPoolTaskExecutor를 관리하여 비동기 작업이 수행되기 때문에, 외부에서 해당 빈을 직접 주입받아 shutdown()작업을 수행해주어야한다.
+
+      - ```java
+        @Component
+        @RequiredArgsConstructor
+        public class ThreadPoolTaskExecutorShutdownJobExecutionListener implements JobExecutionListener {
+            private final ThreadPoolTaskExecutor executor;
+        
+            @Override
+            public void beforeJob(JobExecution jobExecution) {
+            }
+        
+            @Override
+            public void afterJob(JobExecution jobExecution) {
+                executor.shutdown();
+            }
+        }
+        
+        // job 생성
+        private final ThreadPoolTaskExecutorShutdownJobExecutionListener threadPoolTaskExecutorShutdownJobExecutionListener; 
+                                                                                                                             
+        @Bean                                                                                                                
+        public Job sampleJob21() {                                                                                           
+            return jobBuilderFactory.get("sampleJob21")                                                                       
+                    .incrementer(new RunIdIncrementer())                                                                     
+                    .start(asyncStep1())                                                                                      
+                    .listener(threadPoolTaskExecutorShutdownJobExecutionListener)                                            
+                    .build();                                                                                                
+        }  
+        ```
+
+        배치 job에 대한 이벤트 인터페이스인 JobExecutorListener에서 beforeJob과 afterJob을 오버라이딩하여 실행중인 ThreadPoolTaskExecutor의 스레드를 제어해준다.
+
+      - 혹은 위의 방법에서 처럼 ThreadPoolTaskExecutor의 설정(keepAliveSeconds, allowThreadTimeout)으로 task를 제어해준다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### DAO vs DTO
 
 <details>
@@ -1386,6 +1492,11 @@
 
   - Post를 통해 RequestBody를 받을 때, `Jackson2HttpMessageConverter`에서 Json을 `ObjectMapper`를 이용해 매핑을 시켜주기 때문에 Setter는 필요없다.
 
+    - ObjectMapper
+      - `readValue([JSON String],[Object.class])`
+      - `writeValue([생성할 파일],[object])`
+        - object -> json : `writeValueAsString([object])`
+
   - Get에서는 Jackson2HttpMessageConverter가 아닌 `WebDataBind`에서 파라미터값을 받아준다. 이때, WebDataBind는 기본적으로 `initBeanPropertyAccess`메서드를 통해 파라미터와 객체를 매핑시켜주는데, 이는 `Java Bean`으로 등록해주기 때문에 Setter가 필요하게된다.
 
   -  Get에서 Setter없이 파라미터를 객체로 매핑해주기 위해서는 `initDirectFieldAccess`로 빈 등록이 아닌 필드에 직접 접근해 할당하도록 한다.
@@ -1492,7 +1603,7 @@
     - 간단한 쿼리도 직접 작성해줘야한다.
   
 - ORM (Object Relation Mapping)
-  - 객체와 객체형 데이터베으스를 매핑시켜주는 기술
+  - 객체와 객체형 데이터베이스를 매핑시켜주는 기술
   - 장점
     - 객체지향적인 코드로 인해 더 직관적이고 비즈니스 로직에 더 집중할 수 있게 도와준다.
     - 재사용 및 유지보수의 편리성이 증가한다
@@ -1527,9 +1638,66 @@
 -----------------------
 
 - 데이터베이스에 접근하기 위해 자바에서 제공하는 API
+
 - 모든 자바의 데이터베이스 접근의 기본
+
 - Plain JDBC
   - JDBC를 통해 데이터베이스에 접근하기 위해서는 `Driver 로드 -> 데이터베이스 연결을 위한 Connection생성 -> Statements를 통한 질의 -> 질의 결과 ResultSet에 저장 -> 생성한 객체 close` 의 과정을 거쳐야한다.
+  
+- 쿼리 작성
+
+  - statement
+
+    - ```java
+      try {
+          Connection conn = null;
+          Statement stmt = null;
+           
+          String sql = "INSERT CUSTOMER (NAME, AGE, ADDRESS) VALUES('" + name +"'," + age + ",'" + address +"')";
+           
+          conn = DriverManager.getConnection("jdbc:oracle:thin:@" + ip + ":" + port + ":" + sid, id, password);
+          stmt = conn.createStatement();
+          stmt.executeQuery(sql);
+           
+          stmt.close();
+          conn.close();
+      } catch(Exception e) {
+          e.printStackTrace();
+      }
+      ```
+
+    - statement로 쿼리를 작성할때 String타입으로 쿼리를 작성하고 매개변수를 중간에 문자열 연산을 통해 작성을 해주게된다.
+
+    - Sql inject와 같이 보안에 취약하고 가독성이 좋지 못하다.
+
+  - prepareStatement
+
+    - ```java
+      try {
+          Connection conn = null;
+          PreparedStatement pstmt = null;
+           
+          String sql = "INSERT CUSTOMER (NAME, AGE, ADDRESS) VALUES(?, ?, ?)";
+           
+          conn = DriverManager.getConnection("jdbc:oracle:thin:@" + ip + ":" + port + ":" + sid, id, password);
+          pstmt = conn.prepareStatement(sql);
+           
+          pstmt.setString(1, name);
+          pstmt.setInt(2, age);
+          pstmt.setString(3, address);
+           
+          pstmt.executeUpdate(sql);
+           
+          stmt.close();
+          conn.close();
+      } catch(Exception e) {
+          e.printStackTrace();
+      }
+      ```
+
+    - prestatement는 statement와 다르게, 매개변수를 문자열 연산으로 작성해주지 않고 set을 이용해 빌더 형식으로 매개변수를 적용해준다.
+
+    - 코드의 안전성과 가독성을 높여줄수 있다.
 
 
 </details>
@@ -1685,8 +1853,8 @@
 - JPA에서 제공하는 쿼리 방법
 - 객체지향 쿼리로써 엔티티 객체를 대상으로 쿼리하며 SQL을 추상화 하기 때문에 데이터베이스에 종속되지 않는다.
 - `select m from Member`
-- 엔티티가 영속성 컨텍스트에만 저장된 상태로 조회하면 DB에 조회 데이터가 존재하지 않기 때문에 조회되지 않는다.
-  - JPQL로 조회시 DB에 SELECT쿼리가 요청되는 것이므로 DB에는 해당 데이터가 존재하지 않고 영속성 컨텍스트에만 존재하기 때문에 조회되지 않는다.
+- ~~엔티티가 영속성 컨텍스트에만 저장된 상태로 조회하면 DB에 조회 데이터가 존재하지 않기 때문에 조회되지 않는다.~~
+  - ~~JPQL로 조회시 DB에 SELECT쿼리가 요청되는 것이므로 DB에는 해당 데이터가 존재하지 않고 영속성 컨텍스트에만 존재하기 때문에 조회되지 않는다.~~
 
 
 
@@ -1742,7 +1910,7 @@
 
 - EntityManagerFactory
   - EntityManger를 생성해주는 팩토리
-  - 비용이 비싸기 때문에 일반적으로 하나의 EntityManagerFactory를 생성해서 사용한다.
+  - 비용이 비싸기 때문에 일반적으로 하나의 EntityManagerFactory를 생성해서 사용한다.  (싱글톤 방식)
   - 동시성을 보장하기 때문에 동시에 여러 스레드의 접근을 허용한다.
 
 - EntityManger
@@ -1886,7 +2054,7 @@
   | ------------ | ---------------------------------------- | -------------------- | ------------------------------------------------------------ |
   | REQURED      | 해당 트랜잭션 사용                       | 새로운 트랜잭션 생성 | Default, 예외 발생시 롤백되고, 호출한곳도 롤백               |
   | MANDATORY    | 해당 트랜잭션 사용                       | 예외 발생            |                                                              |
-  | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 | 두개의 트랜잭션 독립                                         |
+  | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 | 별도의 트랜잭션 독립                                         |
   | SUPPORTS     | 해당 트랜잭션 사용                       | 트랜잭션 없이 실행   | 엔티티 조회시 propagation은 supports와 read-only를 사용하는것이 성능적으로 좋다. |
   | NOT_SUPPORT  | 해당 트랜잭션 보류                       | 트랜잭션 없이 진행   | Read-only를 사용할때 사용하면 성능적으로 좋다.               |
   | NEVER        | 예외 발생                                | 트랜잭션 없이 진행   |                                                              |
@@ -1959,9 +2127,12 @@
   - Fetch Join이란, 조회 주체가 되는 엔티티만 영속성화하는 것이 아닌 연관 엔티티도 조회하여 영속화해주는 JPQL의 특별한 쿼리.
   - JPQL에 fetch join쿼리를 사용한다.
     - @Query("select o from owner o join fetch o.cats")
-
+    - <img width="392" alt="image" src="https://user-images.githubusercontent.com/57162257/196611283-5fe908c2-4398-4648-a50a-72f89cce905a.png">
+  
 - EntityGraph `(outer join)`
   - 쿼리 메소드에 @EntityGraph 어노테이션을 사용하여 attributePaths 속성에 연관 엔티티 필드 값을 작성하고 join 없이 JPQL을 작성한다.
+  - <img width="514" alt="image" src="https://user-images.githubusercontent.com/57162257/196611154-c915d225-16a3-485c-871d-4c9eabc6b6a7.png">
+  - JPQL에 inner join을 작성하면 inner로 참조 엔티티를 불러올 수 있다.
 
 
 </details>
@@ -2161,7 +2332,8 @@
 - 읽기 전용 방법
   - 엔티티가 아닌 스칼라 타입으로 특정 필드만 선택해서 조회
     - `SELECT o.id, o.name FROM Order o`
-
+    - 스칼라 타입 : 하나의 데이터만 읽을수 있는 타입
+    
   - 읽기 전용 트랜잭션 사용
     - @Transactional(readOnly = true)
 
