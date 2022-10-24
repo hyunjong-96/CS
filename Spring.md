@@ -2074,6 +2074,48 @@
 
 -----------------------
 
+### Propagation 주의사항
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
+- Propagation.REQUIRED
+  - REQUIRED는 기존 트랜잭션이 존재한다면, 해당 트랜잭션을 그대로 사용한다. 연속으로 사용하는 트랜잭션을 내부 트랜잭션이라고 명시한다면, 
+  - 내부 트랜잭션에서 예외를 발생시킨다면 해당 트랜잭션에서 rollback-only 마킹을 하게된다. 내부 트랜잭션에서 예외 작업처리를 완료했고 메인 트랜잭션에서 작업을 마무리하려고 commit을 수행하게되면 이미 내부 트랜잭션에 의해 해당 트랜잭션이 rollback 마킹이 되어버렸기 때문에 재활용(작업 완료)가 되지 않게된다.
+  - 이를 해결하기 위해서는 NESTED정책을 사용해주어야한다.
+
+- Propagation.NESTED
+  - 기존 트랜잭션이 있다면, 중첩 트랜잭션을 수행해주게 된다.
+    - 기존 트랜잭션에 save point를 지정해주고 내부적으로 새로운 트랜잭션을 수행해준다.
+
+  - 해당 정책은 부모 트랜잭션에 예외가 발생한다면 둘다 롤백되지만, 중첩 트랜잭션에 예외가 발생한다면, 중첩 트랜잭션만 롤백이 수행되고 부모 트랜잭션은 롤백이 수행되지 않는다.
+  - 그렇기 때문에 중첩 트랜잭션의 예외로 부모 트랜잭션이 영향을 받지 않기 때문에 REQUIRED에서 발생한 문제를 해결할 수 있다.
+  - 하지만 Hibernate에서는 NESTED를 지원해주지 않는다. DataSourceTransactionManager를 직접 사용할때만 지원해준다.
+    - (예상) JPA에서는 변경감지를 통해 업데이트를 지연해서 수행하기 때문에 트랜잭션 경계를 설정할 수 없기 때문에 savepoint를 지원해주지 않는듯하다.
+
+- https://techblog.woowahan.com/2606/
+- https://reiphiel.tistory.com/entry/understanding-of-spring-transaction-management-practice
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### N+1
 
 <details>

@@ -68,6 +68,7 @@
     - Exit status : 실행  후 실행 결과 상태
   - Batch Job Execution Param
     - Job에서 사용된 파라미터 정보
+    - Job Execution과 1대1 매칭
   - Batch Job Execution Context
     - Job Execution와 1대1로 매핑되어있으며 작업 중 사용되는 정보 저장
   - Batch Step Execution
@@ -160,7 +161,7 @@
       그렇기 때문에 singletone으로 생성된 Batch 컴포넌트에 JobParameter를 선언하게 되면 "not found jobparameter" 가 발생하기 때문에 실행되는 시점에 bean을 생성하는 @JobScope와 @StepScope가 지정된 Batch 컴포넌트에 JobParameter를 선언하여 사용할수 있다. (추상적 대답)
   
 - 주의 사항
-  - @JobScope나 @StepScope가 지정된 Batch 컴포넌트는 반환되는 타입을 프록시 객체로 감싸서 반환하게 된다. 그렇기 때문에 인스턴스를 반환하게 되면 인스턴스가 가지고 있는 메소드를 오버라이딩하여 사용되기 때문에 해당 Batch 컴포넌트에서 반환되는 값을 가지고 사용하는 곳에서 NPE과 같은 에러를 발생시킬수 있습니다.
+  - @JobScope나 @StepScope가 지정된 Batch 컴포넌트는 반환되는 타입을 프록시 객체로 감싸서 반환하게 된다. 그렇기 때문에 인터페이스를 반환하게 되면 인터페이스가 가지고 있는 메소드를 오버라이딩하여 사용되기 때문에 해당 Batch 컴포넌트에서 반환되는 값을 가지고 사용하는 곳에서 NPE과 같은 에러를 발생시킬수 있습니다.
     그렇기 때문에 scope를 지정한 Batch 컴포넌트에서는 구현체를 반환 타입으로 지정해줘야 한다.
 
 
@@ -650,36 +651,31 @@
        2. FuturTask는 Callback 인터페이스를 실행하며 그 안에서 ItemProcessor가 작업 처리
     3. AsyncItemProcessor를 실행하는 동안 메인 스레드는 AsyncItemWriter를 실행하고 AsyncItemWriter는 작업을 ItemWriter에게 위임
        - ItemWriter는 `List<Futur<T>>`를 전달받는데 해당 결과(비동기 작업 by AsyncItemProcessor)를 전달받기 까지 대기 한 후 write 작업을 수행한다.
-
 - Multi Thread Step
   - <img src="https://velog.velcdn.com/images/hyunjong96/post/a7b343f4-0ebf-4d95-9293-5238218749b5/image.png" width="70%">
   - Step내의 Chunk구조인 ItemReader, ItemProcessor, ItemWriter마다 여러 스레드가 할당되어 실행되는 방식
-    즉, Step내에 멀티스레도 Chunk기반 처리가 이루어지는 구조
-  - StepBuilder시 멀티 스레드 사용을 위해 TaskExecutor를 선언해주고 throttleLimit으로 멀티 스레드에 사용할 스레드 개수를 
-  - StepBuilder시
+    즉, Step내에 멀티스레드로 Chunk기반 처리가 이루어지는 구조
+  - StepBuilder시 멀티 스레드 사용을 위해 TaskExecutor를 선언해주고 throttleLimit으로 멀티 스레드에 사용할 스레드 개수를 선언
   - 과정
     1. Step실행시 TaskExecutionRepeatTemplate 반복자를 이용해서 RepeatCallBack을 실행
     2. RepeatCallBack은 그 안에서 ChunOrientedTasklet을 반복적으로 실행한다.
   - 주의사항
-    - ItemReader와 ItemWriter는 Thread-Safe한 구현자를 사용해야한다.
+    - **ItemReader와 ItemWriter는 Thread-Safe한 구현자를 사용해야한다.**
       - 스레드마다 중복 데이터를 읽지 않도록 동기화가 보장되어야한다.
       - PagingItemReader는 thread-safe하지만 CursorItemReader는 thread-safe하지 않다.
       - JpaItemWriter, HibernateItemWriter, JdbcBatchItemWriter는 thread-safe
       - Thread-Safe하지 않은 ItemReader사용시 중복된 데이터를 읽어오고 예상한 결과를 보장할 수 없다.
         - `SynchronizedItemStreamReader`을 thread-safe하지 않은 ItemReader를 감싸서 사용하게 되면 Read작업이 synchronized메소드에 감싸져 호출되기 때문에 동기화된 읽기가 가능해진다.
-
-    - ItemReader설정시 saveState() 옵션을 false로 선언해야한다.
+  
+    - **ItemReader설정시 saveState() 옵션을 false로 선언해야한다.**
       - saveState(true)시 실패지점을 저장하고 재시작이 가능하게 한다.
       - 단일스레드로 작업시 10개의 데이터가 있을때 8번째 작업에서 실패시 이전 7번째 데이터까지는 정상 처리되었다는 뜻이기 때문에 8번째 데이터부터 재실행이 가능하다.
       - 하지만 멀티스레드 작업시 Chunk를 개별적으로 수행하기 때문에 이전 데이터가 정상 처리 여부를 알 수 없기때문에 실패지점 저장시 재실행지점이 오염될 수 있습니다.
-
 - Parallel Step
   - <img src="https://velog.velcdn.com/images/hyunjong96/post/3e927114-d5ba-46f3-865b-923286636306/image.png" width="70%">
   - 여러 Step을 SplitState를 통해 각 Flow(Step)에 스레드를 할당하여 병렬적으로 처리해주는 방식
-
 - Partition
   - Master/Slave방식으로 Master가 데이터를 파티셔닝하고 각 파티션에게 스레드를 할당하여 Slave가 독립적으로 작동하는 방식
-
 - Remote Chunking
   - 분산 환경처럼 Step처리가 여러 프로세스로 분할되어 다른 외부 서버로 전송되어 처리하는 방식
 
@@ -788,6 +784,38 @@
 <br>
 
 
+
+<br>
+
+-----------------------
+
+### Spring Batch 스레드 종료(?)
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+
+-----------------------
+
+- Spring Batch에서 Multi Thread Step으로 병렬작업을 하는 경우 Step Builder에 TaskExecutor를 적용하여 수행하게된다.
+  - 설정하는 TaskExecutor는 execute()만 선언하고 있기 때문에 shutdown과 같은 메서드가 없어 작업을 강제 종료 시킬 수 없다.
+  - `System.exit(SpringApplication.exit(SpringApplication.run(SpringBatchRealApplication.class, args)))`
+  - 위와 같은 설정을 통해 step을 병렬적으로 처리하는 경우 main스레드가 종료시 jvm을 강제 종료시킬수 있도록 하여 자식 그세드들이 성공적으로 작업을 마치고 종료됨을 보장해준다.
+
+- @Async를 사용할때 ThreadPoolTaskExecutor를 사용하는 경우
+  - ThreadPoolTaskExecutor를 사용하는 경우 스레드를 강제로 종료해줄수 있는 `keepAliveSecond`, `allowCoreThreadTimeout` 메서드를 활용하여 특정 시간동안 task를 받지 못한 스레드를 강제 종료시켜버리고, coresize의 스레드도 강제 종료시켜준다.
+
+
+</details>
+
+-----------------------
+
+<br>
 
 
 

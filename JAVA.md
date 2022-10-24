@@ -1759,10 +1759,11 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
     + 시간복잡도
       + add : O(1)
         + 배열 복사 : O(n)
-      + remove : O(1)
+      + remove : O(n)
         + 배열 이동 : O(n)
       + get : O(1)
       + contains : O(n)
+        + 내부적으로 indexOf를 통해서 배열 전체를 탐색하여 Object 여부를 확인한다.
   + LinkedList
     + 데이터의 이전 노드와 다음 노드의 상태만 알고 있는 자료구조
     + 데이터 추가,삭제시 효율적이다.
@@ -1773,6 +1774,7 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
       + remove : O(1)
       + get : O(n)
       + contains : O(n)
+        + 내부적으로 indexOf
 + Set
   + HashSet
     + 객체들을 순서를 보장하지 않고 저장하며 중복을 허용하지 않는다.
@@ -1809,13 +1811,13 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
   + HashMap
     + key,value 형식으로 순서에 상관없이 저장되며 null을 허용하며 thread-safe 보장 안함
     + 시간복잡도
-      + add : O(1)
+      + Put : O(1)
       + get : O(1)
       + containsKey : O(1)
   + LinkedHashMap
     + key,value 형식으로 순서를 보장하며 저장되며 null을 허용하고 thread-safe 보장 안함
     + 시간복잡도
-      + add : O(1)
+      + Put : O(1)
       + get : O(1)
       + containsKey : O(1)
   + TreeMap
@@ -1823,15 +1825,17 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
     + hashMap은 탐색에 효율적이지만 TreeMap은 레드블랙트리로 이루어져있어 범위탐색과 정렬에 표과적이다.
       + Submap()을 통해 범위 탐색이 가능하다.
     + 시간복잡도
-      + add : O(logN)
+      + Put : O(logN)
       + get : O(logN)
       + containsKey : O(logN)
   + ConcurrentHashMap
     + Key,value 형식으로 쓰기 작업시에만 thread-safe보장, 읽기 작업에는 thread-safe 보장 안함
     + null 허용하지 않음
     + 시간복잡도
-      + add : O(1)
+      + put : O(1)
+        + synchronized를 적용하여 삽입 작업시 해당 **버킷**에 락을 걸어 동시성 문제를 해결
       + get : O(1)
+        + 읽기 작업시에는 synchronized를 적용하지 않기때문에, 락이 걸리지 않고 최근 값을 읽어온다.
       + containsKey : O(1)
   + 기본적으로 Map의 구현체는 삽입과 탐색의 시간복잡도가 O(1)이게 된다. 하지만 해시 충돌로 인해 특정 해시에 데이터 쏠림이 발생하게 된다면 해당 해시에서 LinkedList로 선형탐색하여 데이터를 찾기때문에 O(n)이 발생할 수 있다.
 + Queue
@@ -1850,9 +1854,11 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
       + remove(Object) : O(n) // ?
       + contains() : O(n)
     
-  + PriorityBlockingQueue // ?
+  + PriorityBlockingQueue
     + 일반적인 Queue구조로 우선순위가 높은 데이터 먼저 나가는 자료구조
     + null을 허용하지 않고 Thread-safe 보장
+    + reentrantLcok을 사용해서 해당 자원에 하나의 스레드만 접근가능하도록 락을 걸어준다
+      + reentrantLock은 뮤텍스처럼 시작과 끝에 lock과 unlock을 통해 하나의 스레드만 접근가능하도록 락을 걸어준다.
 
 
 </details>
@@ -1917,13 +1923,15 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
             + 구조가 간단하다
           + 단점
             + 최악의 경우 해시 테이블 전체를 탐색하는 상황 발생
+            + 클러스터 현상 발생
         + 2차 탐색
           + 원래 저장해야하는 위치로부터 특정 거리만큼 떨어진 영역을 검색하여 빈 영역에 저장
-            + 탐색할 위치를 제곱씩 늘려준다 (1^2, 2^2, 3^2, 4^2 ...)
+            + 탐색할 위치의 제곱값을 늘려준다 (1^2, 2^2, 3^2, 4^2 ...)
             + 장점
               + 선형탐색에서 1밀집 문제를 해결
             + 단점
               + 접근하는 위치가 항상 동일하기 때문에 연속 충돌발생 가능
+              + 동일한 해시값에 대해 2차 클러스터 현상 발생
         + 2중 해시
           + 해시 충돌시 다른 해시 함수 적용
             + 첫번째 해시함수를 통해 해시 충돌이 발생했다면 다음 해시함수에서 탐색 이동폭을 구해주는 방법
@@ -1933,6 +1941,13 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
               + 클러스터 현상
                 + 해시 공간에 특정 공간에만 데이터가 밀집되는 현상
                 + 클러스터 현상이 적을수록 좋은 해시 테이블
+        + Java8에서는 Separate Chaing사용
+          + Open addressing에서는 해시 충돌시 빈 버킷공간을 찾기 위해 추가적인 비용이 발생하며, 삭제시에도 해시 충돌로 인한 값이 저장되었다면 표시를 해주어야하는 추가적인 비용이 발생한다.
+          + 그렇기 때문에 별도의 저장공간을 사용하는 Separate Chainning방법을 채택한듯.
+          + Java8에서는 기존 LinkedList로 충돌 값들을 저장하지만, 특정 값을 증가하게 되면 Tree(Red-black-Tree)로 변경하여 값을 저장.
+            + LinkedList에서 저장 데이터가 8개이상이면 Tree로 변경
+            + Tree에서 남은 개수가 6개가되면 LinkedList로 변경
+            + Java7에서는 Entry를 사용했지만 Java8에서는 Node 클래스를 사용.
   + 데이터베이스의 인덱스에서 해시 테이블의 단점
     + 해시 테이블은 키값의 순서와 버킷의 순서와 연관성이 없기 때문에 데이터베이스에서 range query를 사용할때 해당 인덱스를 사용할 수 없다.
 
@@ -2070,17 +2085,19 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
 
   + 두개의 요소를 비교하여 큰 값이 뒤로 가도록 변경해주면서 반복하는 정렬
 
+  + 마지막 배열에 가장 큰값을 저장하므로 마지막 배열의 index를 하나씩 줄여가며 반복
+
   + ```java
     void bubbleSort(int[] arr){
       for(int i=0;i<arr.length;i++){
-        for(int j=i;j<arr.length-1;j++){
-          if(arr[j]>arr[j+1]){
-            int temp = arr[j+1];
-            arr[j+1] = arr[j];
-            arr[j] = temp;
-          }
-        }
-      }
+    			for(int j=0;j<arr.length-i-1;j++){
+    				if(arr[j]>arr[j+1]){
+    					int swap = arr[j];
+    					arr[j] = arr[j+1];
+    					arr[j+1] = swap;
+    				}
+    			}
+    		}
     }
     ```
 
@@ -2184,6 +2201,16 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
   + 시간복잡도 : O(nlogn)
 
     + 보통 : nlogn, 최악 : n^2(pivot으로 선택되는게 최소또는 최대값인 경우)
+    
+  + while(start<=end) 인 이유
+  
+    + while(start<end)이게된다면, start=0, end=1인 경우 pivot은 index 0의 값을 가르키게 된다. 그렇게 되면 swap이 발생하지 않고 start = 0인 상태로 quickstart에 part2가 0으로 반환되게 되고 quckstart의 start=0, end=1로 무한 루프에 걸리게 된다.
+    + pivot을 기준으로 pivot의 오른쪽 위치를 오른쪽 파티션으로 적용하고 그 왼쪽을 왼쪽 파티션으로 적용하기 위함.
+  
+  + if(start<=end)가 필요한 이유
+  
+    + start는 pivot보다 같거나 큰 값인 경우 멈추고 end는 pivot보다 같거나 작은 경우 멈추게된다. 이떄, if(start<=end)가 없다면 start>end가 엇갈리게 되는 경우가 발생할 수 있는데 이경우 start와 end가 swap될 경우 정렬이 무너지게 된다.
+    + [1,1,8,2,3,4,7]의 배열인 경우, start = 2, end = 6, pivot = 1일 때 end는 1까지 감소되게 된다. 이때 if(start<=end)가 없기 때문에 swap이 발생하고 [1,8,1,2,3,4,7] 로 변경되어 정렬이 깨지게 된다.
   
 + 머지소트보다 퀵소트를 더 많이 사용하는 이유
 
@@ -2232,6 +2259,7 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
 + 레드 블랙 트리
   + 이진 탐색트리에서 데이터 쏠림현상을 방지하기 위한 트리
   + 스스로 균형을 맞춘다.
+  + 균형 이진 탐색트리이기 때문에 항상 O(logN)의 복잡도를 가진다.
   + 조건
     + 루트노드는 항상 검은색
     + 모든 leaf노드는 루트노드와 같은 검은색
@@ -2254,6 +2282,26 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
       3. 두 자식노드는 빨간색, 부모노드는 검은색으로 변경
   + B-Tree
     + https://rebro.kr/169
+    + 2개 이상의 자식 노드를 가질 수 있는 밸런스 트리
+    + 하나의 level에 여러 노드를 가질 수 있기 때문에 높이가 낮아서 다른 밸런스 트리보다 더 빠르게 탐색이 가능하다.
+    + 시간복잡도
+      + 탐색 : O(logN)
+      + 삽입 : O(logN)
+        1. 삽입할 데이터를 넣을 위치를 탐색
+        2. 데이터 삽입
+        3. 노드가 가득차게 된다면, 노드를 분할하고 가운데 값을 부모 노드로 이동시킨다.
+        4. 부모노드도 가득차게된다면 반복
+      + 삭제 : 
+        + 삭제할 데이터가 리프 노드에 있는 경우
+          + 삭제할 노드의 크기가 최소이고 형제 노드의 크기가 최소가 아닌 경우
+            + 부모 노드를 삭제 노드에 삽입, 형제 노드의 최대또는 최소의 값을 부모 노드에 삽입
+          + 삭제할 노드의 크기와 형제 노드의 크기가 모두 최소인 경우
+            + 부모 노드값을 형제노드에 삽입하여 부모 노드의 크기를 줄인다.
+        + 삭제할 데이터가 리프 노드를 제외한 노드에 있는 경우
+          + 자식 노드의 크기가 아닌 값이 있는 경우
+            + 최소가 아닌 자식 노드에서 왼쪽 자식 노드라면 최대값, 오른쪽 자식 노드라면 최소값을 swap하고 swap되어 리프노드에 있는 부모값을 삭제하고 삭제과정 수행
+          + 삭제할 노드와 자식 노드의 크기가 모두 최소인 경우
+            - 삭제할 노드를 삭제하고 자식 노드를 병합하고 형제 노드에 부모노드 값을 불러와 병합한 자식 노드를 연결해준다.
 
 
 

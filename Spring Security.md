@@ -50,14 +50,57 @@
   - 방법
     - WebSeucrityConfiguerAdapter라는 Filter chain을 구성하는 클래스를 상속받아 Configure클래스를 생성하고configure() 를 오버라이딩하여 filter chain을 구성할 수 있다.
     - 현재 WebSecurityConfigureAdapter클래스가 deprecate당해서 새로운 방법을 사용해야한다 (공부해야함)
+      - 바뀐 버전에서는 WebSecurityConfigureAdapter대신, SecurityFilterChain을 빈으로 등록하여 사용해야한다.
+      - https://velog.io/@pjh612/Deprecated%EB%90%9C-WebSecurityConfigurerAdapter-%EC%96%B4%EB%96%BB%EA%B2%8C-%EB%8C%80%EC%B2%98%ED%95%98%EC%A7%80
   - 종류
-    - SecurityContextPersistenceFilter : SecurityContextRepository를 통해 Session에 SecurityContext가있는지 확인하고 존재한다면 해당 SecurityContext를 SecuirtyContextHolder에 저장하고 thread-local에 저장한다.
+    - SecurityContextPersistenceFilter : HttpSecurityContextRepository를 통해 Session에 SecurityContext가있는지 확인하고 존재한다면 해당 SecurityContext를 SecuirtyContextHolder에 저장하고 thread-local에 저장한다.
+      - 인증 전
+        1. HttpSecurityContextRepository에서 SecurityContext를 생성한다.(현재는 null)
+        2. 인증 필터에서 인증완료후 Authentication을 생성하고 SecurityContext에 저장한다.
+        3. 응답 전에 Session에 SecurityContext를 저장하고 SecurityContext를 초기화한다.
+      - 인증 후
+        1. Session에서 SecurityContext를 가져온다.
+        2. SecurityContextHolder에 SecurityContext를 저장한다.
     - UsernamePasswordFilter : login요청을 감시하며 인증과정 진행.
     - SessionManagementFilter : 요청이 시작된 이후 인증된 사용자인지 확인하고, 인증된 사용자인 경우 동시 로그인 확인 등을 확인한다.
     - ExceptionTranslationFilter : filter chain내에서 발생되는 모든 예외를 처리한다.
       - AuthenticationEntryPoint : 인증되지 않은 사용자가 요청했을 경우 처리
       - AccessDeniedHandler : 인가되지 않은 사용자가 요청했을 경우 처리
-    - 등 ...
+    - FilterSecurityInterceptor : 인가처리 담당 필터
+      - 인증없이 요청하게되면 AuthenticationException 발생
+      - 권한없는 요청시 AccessDeniedException 발생
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### AuthenticaionManger & AuthenticationProvider
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
+- AuthenticationManager
+  - 인증 필터로 부터 인증 요청을 받게되면 인증처리자(AuthenticationProvider)중 해당 인증이 처리가능한 provider를 찾아 인증을 위임하게된다. 인증이 완료되면 Authentication을 전달한다.
+
+- AuthenticationProvider
+  - 인증 처리를 담당하는 인터페이스로서, 인증을 처리하는 authentication메서드와 인증처리 가능한 provider인지 검사하는 support메서드를 정의한다.
+    - authentication메서드 로직
+      - UserDetailsService에서 UserDetails를 가져와 아이디 인증, 패스워드 인증 등을 수행하고 인증된 Authentication을 전달한다.
+
 
 
 </details>
@@ -179,11 +222,7 @@
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
 <br />
-
-
-
-
-
+  
 
 
 -----------------------
@@ -191,6 +230,7 @@
 - 요청이 들어오게 되면 SecurityContextPersistenceFilter에서 HttpSessionSecurityContextRepository를 통해 인증 여부를 확인합니다.
 - 인증 전에는 UsernamePasswordAuthenticationFilter에서 사용자를 인증하고 인증된 객체인 Authentication을 SecurityContext에 저장합니다. 그리고 사용자에게 응답하기 전에 Session에 SecurityContext를 저장하고 인증된 정보를 사용합니다.
 - 인증 후에는 Session의 SecurityContext를 불러와 thread local에 SecurityContext를 담은 SecurityContextHolder를 저장하고 인증된 정보를 사용합니다.
+- https://devlog-wjdrbs96.tistory.com/404
 
 </details>
 
@@ -575,3 +615,7 @@ https://imbf.github.io/interview/2021/03/06/NAVER-Practical-Interview-Preparatio
 https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0-Authentication-SecurityContext
 
 https://ugo04.tistory.com/167
+
+
+
+https://catsbi.oopy.io/f9b0d83c-4775-47da-9c81-2261851fe0d0
