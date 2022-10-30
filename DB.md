@@ -820,7 +820,6 @@
 + 클러스터 인덱스 (Cluster Index)
 
   + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/194693412-7b9da318-d3b6-40b6-9bbd-c3c368887b3d.png">
-  + 생성 ` CREATED CLUSTERED INDEX [INDEX 이름] ON [테이블 이름] ([인덱스 컬럼1],[인덱스 컬럼2])`
   + Root, Intermediate, Leaf(Data) Page로 구성
   + 순차적으로 저장되는 Heap구조와 다르게, 클러스터 인덱스 컬럼을 기준으로 Data Page가 정렬된 상태로 저장
   + Leaf Page에 실제 데이터가 정렬된 상태로 위치하며, 다른 페이지는 Leaf Page로 이동하기 위한 Index컬럼과 참조 포인터로 이루어져있다.
@@ -859,7 +858,7 @@
 
   + <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/194705341-e3248038-2f38-4dd2-b3a5-a8073d485152.png">
 
-  + 생성 : `  CREATED INDEX [인덱스 이름] ON [테이블 이름] ON ([인덱스 컬럼1],[인덱스 컬럼2])`
+  + 생성 : `  CREATED INDEX [인덱스 이름] ON [테이블 이름] ([인덱스 컬럼1],[인덱스 컬럼2])`
 
   + Root, Intermediate, Leaf로 구성되어있으며 Leaf Page와 Data Page가 각각 분리되어있다.
 
@@ -935,6 +934,100 @@
   - 논 클러스터 인덱스에서만 Included Colume생성 가능.
     - 클러스터 인덱스는 Leaf Page가 Data Page이기 때문에 별도로 컬럼이 추가된 구조가 필요없기 때문이다.
 - 생성 : ` CREATED INDEX [인덱스 이름] ON [테이블 이름] ([인덱스 컬럼1],[인덱스 컬럼2]) INCLUDE([추가 컬럼1],[추가 컬럼2]) `
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 페이징 성능 개선
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
++ 페이징의 방법에는 `페이징 버튼 타입`과 `More 타입` 이 있다. 
+  페이징 버튼 타입은 페이지 번호인 offset을 기준으로 limit까지의 데이터를 읽어오고 offset이전의 데이터는 무시하기 때문에 비효율적이다.
+
++ NoOffset
+
+  + 페이징 버튼 타입의 단점을 해결하기 위해 offset쿼리를 사용하지 않는 More 타입인 `NoOffset`이 있다.
+
+  + NoOffset은 정렬된 클러스터 인덱스를 사용하여 이전에 사용했던 인덱스 다음부터 limit까지의 데이터를 읽어와 첫번째 페이지를 읽는 것과 동일한 성능을 제공한다.
+
+  + ```sql
+    //SQL
+    SELECT *
+    FROM [테이블]
+    WHERE id < [이전 인덱스]
+    ORDER BY id DESC
+    LIMIT pageSize;
+    ```
+
+  + 위의 SQL을 이용하게 된다면 클러스터 인덱스를 이용해 효율적으로 데이터를 한번에 조회할 수 있다.
+
+  + 참고로 이전 인덱스는 첫번쨰 페이지에는 필요없고 두번째 페이지 조회부터 필요하게 되는데, 이는 query dsl에서 동적 쿼리를 생성해서 사용하면 편리하다.
+
+  + 장점
+
+    + 페이지를 불러올때 인덱스를 이용해 첫번쨰 페이지를 불러오는 성능과 동일하게 제공한다.
+
+  + 단점
+
+    + More 페이징 타입은 순차적 페이지 탐색만 가능할뿐, 특정 페이지를 선택 사용이 불가능하다.
+
++ Covering Index
+
+  + NoOffset이 좋은 성능을 보장하지만, 어쩔수 없이 페이징 버튼 타입을 사용한다면, `Covering Index`를 사용하여 성능을 개선할 수 있다.
+
+  + ```sql
+    //기존 페이징
+    SELECT *
+    FROM [테이블]
+    WHERE [조건문]
+    ORDER BY id DESC
+    OFFSET [pageNo]
+    LIMIT [pageSize]
+    ```
+
+  + 기존 페이징 방법을 사용하게 된다면 SELECT, WHERE, ORDER BY, OFFSET, LIMIT에 인덱스를 사용하여 최소한의 성능을 보장해주어야한다.
+    만약 인덱스를 사용해주지 않는다면, 모든 조건에 대한 컬럼을 데이터 블럭에 조회해서 찾아야하기 때문에 성능 하락의 원인이 된다.
+
+  + 이때 Covering Index를 사용하여 WHERE, ORDER BY, OFFSET, LIMIT을 인덱스를 활용하여 찾아준다면 데이터 블럭 조회를 최소화 해줄 수 있다.
+
+    + SELECT를 제외한 것만 우선으로 한다고 한다.
+    + Covering Index를 통해 빠르게 걸러낸 id(인덱스)를 통해 SELECT 항목을 빠르게 조회할 수 있다.
+
+  + ```sql
+    //index : id(cluster), name
+    //covering index
+    SELECT *
+    FROM book
+    JOIN (
+    	SELECT id
+      FROM book
+      WHERE name LIKE '?%'
+      OFFSET pageNo*pageSize
+      LIMIT pageSize
+      ORDER BY id DESC
+    ) as subBook 
+    ON book.id = subBook.id;
+    ```
+
 
 
 
