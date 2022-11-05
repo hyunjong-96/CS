@@ -50,12 +50,14 @@
 
 -----------------------
 
+- 서드 파티
+  - 프로그래밍을 도와주는 제 3자가 만든 코드의 묶음.
+    - 라이브러리, 프레임워크, 애플리케이션 등..
+
 - 프레임워크
   - 개발에 필요한 범용 기능과 틀을 제공하여 개발 효율의 향상을 목표로 하는 소프트웨어 환경
-
 - 라이브러리
   - 다른 사람이 만들어 놓은 재사용 가능한 코드의 집합
-
 - API (Application Programming Interface)
   - 다른 프로그램이 제공하는 기능을 제어할수 있게 만든 인터페이스
   - ex) 소셜로그인 기능은 구글, 카카오 등의 인증프로그램에서 제공하는 인증 API
@@ -185,14 +187,34 @@
 
 -----------------------
 
-- spring은 개발에 필요한 의존성 관리를 직접 등록하고 정확한 버전을 명시해주어야했고 war파일로 배포하고 배포환경에서 해당 파일을 실행시킬 수 있는 웹 서버나 WAS가 있어야 실행가능하기 때문에 배포 환경에서 톰캣을 깔아줘야한다.
-- spring boot는 spring boot starter팩을 통해 개발에 필요한 dependency뿐만 아니라 관련된 의존성도 자동으로 등록해주며 정확한 버전을 명시해주지 않아도 권장 버전으로 자동으로 등록해주어 비즈니스 로직 개발에 집중 할 수 있도록 도와준다.
-- 그리고 내장 서블릿 컨테이너 덕분에 jar파일로 간단하게 배포할 수 있게 되었다.
+- Spring
+
+  - 개발에 필요한 dependency를 명확한 버전을 명시하고 등록하야한다.
+
+  - 프로그래밍에 필요한 설정을 하나하나 설정해주어야한다.
+
+  - war파일을 실행시켜줄 웹서버가 별도로 설치하여 배포해야한다.
+
+- Spring Boot
+  - 개발에 필요한 dependency의 버전을 명시하지 않아도 자동으로 설정하여 등록해주고 starter팩을 통해 설치한 dependency와 관련된 다른 dependency를 한번에 등록시켜준다.
+  - AutoConfiguration을 통해 자동으로 개발에 필요한 내부 dependency를 등록하고 관리해준다.
+  - jar파일 내부에 tomcat이 포함되어있어 파일 자체로 배포가 가능하다.
+  - 이를 통해 비즈니스 로직에 집중하고 실행만 하면 된다.
+
 - jar
   - java 애플리케이션을 동작할 수 있도록 자바 프로젝트를 압축한 파일로, JRE만 가지고도 실행이 가능하다.
-
 - war
-  - servlet, xml등 servlet context관련 파일로 패키징 된 파일로, 웹 관련 자원만 가지고 있기 때문에 이를 실행하기 위해 tomcat과 같은 웹 서버나, WAS가 필요하다.
+  - servlet, xml, JSP등 servlet context(웹 애플리케이션)관련 파일로 패키징 된 파일로, 웹 관련 자원만 가지고 있기 때문에 이를 실행하기 위해 tomcat과 같은 웹 서버(WEB)나, 웹 컨테이너(WAS)가 필요하다.
+    - XML
+      - HTML과 유사한 마크업 언어
+      - 데이터를 보여주는 것이 목적이 아닌, 데이터를 전달하고 저장하는것이 목적
+      - 데이터의 무결성을 검증할 수 있다.
+      - 계층적 데이터 구조를 가진다
+    - JSON
+      - 브라우저 통신을 위한 key-value로 이루어진 데이터 포멧
+      - XML에 비해 빠른 처리속도
+      - 모든 브라우저에서 사용가능
+      - 계층적 데이터 구조를 가진다.
 
 
 
@@ -551,7 +573,7 @@
   - Target
     - 어떤 대상에 부가적 기능을 부여할것인지 (클래스, 메서드)
   - Advice
-    - 실질적으로 aspect가 어떤 일을 할것인지에 대한 부가기능을 담은 구현체
+    - 부가기능의 구현체 & 부가 기능의 실행지점
     - 실행 시점
       - @Before : 대상 메서드 수행 전
       - @After : 대상 메서드 수행 후
@@ -559,11 +581,13 @@
       - @After-throwing : 대상 메서드 예외 발생 후
       - @Around : 대상 메서드의 수행 전/후
   - JoinPoint
-    - 호출되는 모든 메소드 하나하나.
+    - 어디에 적용될것인가? (메서드, 클래스, 객체, 필드)
+    - Aspect와 같은 aop에서는 메서드, 클래스, 객체, 필드에 AOP를 적용할 수 있다.
+      - Aspect : Java에서 제공하는 aop 라이브러리
+    - Spring AOP에서는 method 실행 시점에만 adivce가 적용된다.
   - PointCut
-    - 실제 advice가 적용될 시점으로 JoinPoint중 필터링 되어 사용.
-    - 여러 JoinPoint중 advice를 적용시킬 JoinPoint
-
+    - 실제 advice가 적용될 시점.
+  
 - 특징
   - 스프링 빈에만 AOP 적용가능
 - AOP 적용방법
@@ -575,6 +599,7 @@
 
   - 프록시
     - Spring AOP에서 지원하는 적용방법으로 AOP가 적용된 메소드를 호출할 때 프록시 객체로 감싸서 해당 메소드가 호출될때 부가 기능을 수행하고 타겟 메소드를 호출하게 된다.
+    - AOP는 JDK Dynamic Porxy사용
 
 
 
@@ -646,17 +671,24 @@
 
 - Dynamic Proxy
 
-  - Spring은 자동 프록시 생성기를 통해 직접 프록시 객체를 생성하는데, 프록시를 구현한 객체는 실제 구현체 빈을 프록시 객체가 감싸 빈으로 등록되기 때문에 1개의 빈만 등록되게 된다. (RateDiscountServiceProxy)
+  - ~~Spring은 자동 프록시 팩토리를 통해 직접 프록시 객체를 생성하는데, 프록시를 구현한 객체는 실제 구현체 빈을 프록시 객체가 감싸 빈으로 등록되기 때문에 1개의 빈만 등록되게 된다. (RateDiscountServiceProxy)~~
   - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/192234376-309d4ebe-6c3b-456a-b05c-e29c45c1ce18.png">
-  - 하지만 다른 곳에서 구현 클래스를 의존하게 된다면 빈으로 등록되어있지않아 에러를 발생시킨다. 또한 Dynamic Proxy는 인터페이스 기반으로 프록시 객체를 생성하게 되는데, 인터페이스를 구현한 클래스가 없다면 프록시객체를 생성할 수 없다.
+  - ~~하지만 다른 곳에서 구현 클래스를 의존하게 된다면 빈으로 등록되어있지않아 에러를 발생시킨다. 또한 Dynamic Proxy는 인터페이스 기반으로 프록시 객체를 생성하게 되는데, 인터페이스를 구현한 클래스가 없다면 프록시객체를 생성할 수 없다.~~
   - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/192236404-fe90cd6a-0d61-40f3-86b4-63dfc17252ba.png">
+  - 프록시 팩토리에 의해 런타임시 동적으로 만들어지는 오브젝트
+  - 프록시 팩토리에게 인터페이스를 전달하게 되면, Reflection을 통해 인터페이스를 기반으로 프록시 객체를 생성한다.
   - 한계점
     - 프록시 객체를 실행하기 위해서는 반드시 인터페이스를 생성해야한다. (번거로움)
     - 구현 클래스를 빈으로 등록할 수 없지만, 프록시 객체에서 사용하기 위해 구현 클래스를 생성해야한다. (번거로움)
 
-- GCLib Proxy
+- CGLib Proxy
 
   - Dynamic Proxy의 문제를 해결하기 위해 Spring은 GCLib이라는 바이트 조작 라이브러리를 사용하여  프록시 객체가 인터페이스(DiscountService)에 기반하지 않고 클래스(RateDiscountService) 상속을 기반으로 프록시 객체를 생성하게 하였다.
+  - spring에서는 CGLib Proxy를 사용하지 않았던 이유
+    - spring에서 지원하지 않는 방법이였기때문에 별도의 의존성을 추가해야했다(Enhance)
+    - default 클래스가 필수적이였다
+    - 타겟 클래스의 생성자가 두번 호출
+  - spring 3.2부터 spring core에 의존성이 포함되었고 4.0, 4.3에서 이러한 문제를 해결하면서 CGLib이 안정화 되었다.
 
 - @EnableAspectJAutoProxy
 
@@ -714,7 +746,8 @@
   6. WAS는 HttpServletResponse를 통해 Http Response Message를 생성 후 클라이언트에게 전달.
 - 생명주기
   - 생성 & 초기화
-    - 클라이언트 요청이 들어오면 서블릿 컨테이너에 서블릿이 등록되어있는지 확인하고, 등록되어 있지 않다면 서블릿 객체를 생성하고, init() 메서드를 통해 서블릿 컨테이너에 서블릿을 초기화한다.
+    - 클라이언트 요청이 들어오면 서블릿 컨테이너에 서블릿이 등록되어있는지 확인하고, 등록되어 있지 않다면 서블릿 클래스를 로딩하고 서블릿 객체를 생성하고, init() 메서드를 통해 서블릿 컨테이너에 서블릿을 초기화한다.
+    - 서블릿 생성 및 초기화는 많은 비용이 들기 때문에 한번 생성된 서블릿은 유지한다.
   - 호출
     - 클라이언트 요청에 따라 service() 메소드를 호출해서 서블릿이 요청을 처리하도록 한다.
   - 종료
@@ -724,6 +757,7 @@
   - Servlet
     - 서블릿의 필수 메서드를 선언하고 있는 인터페이스
     - 이 표준을 구현해야 서블릿 컨테이너가 해당 서블릿을 실행할 수 있다.
+    - init(), service(), destroy() 메서드 등이 선언되어있다.
   - GenericServlet
     - Servlet 인터페이스를 상속하여 서블릿 기능을 구현한 클래스
   - HttpServlet
@@ -910,9 +944,9 @@
   0. RequestMapping HandlerAdapter
      - @RequestMapping 어노테이션을 사용하는 클래스, 메소드를 대상으로 지원
   1. HttpRequest HandlerAdapter
-     - HttpRequestHandler인터페이스를 상속받는 클래스를 대상으로 지원
+     - HttpRequestHandler인터페이스를 구현하는 클래스를 대상으로 지원
   2. SimpleController HandlerAdapter
-     - Controller인터페이스를 상속받는 클래스를 대상으로 지원
+     - Controller인터페이스를 구현하는 클래스를 대상으로 지원
 
 </details>
 
@@ -1408,10 +1442,11 @@
   - 가벼운 용량과 빠른 속도를 가진 JDBC의 Connection Pool 프레임워크
   - 동작
     - Thread에서 Connection요청
-    - Connection Pool에 사용가능한 Connection이 있다면 커넥션 제공
-    - Connection이 존재하지 않는다면, HandOfQueue Pooling을 하면서 다른 Thread의 Coinnection 반납을 대기한다.
+    -  이전에 사용했던 Connection이 있는지 확인
+    - 사용했던 Connection이 없다면 Connection Pool에 사용가능한 Connection이 있다면 커넥션 제공
+    - Connection이 존재하지 않는다면, HandOffQueue Pooling을 하면서 다른 Thread의 Coinnection 반납을 대기한다.
       - 다른 Thread가 Connection을 반납하면 HandOfQueue에 Connection을 삽입하고 HandOfQueue Pooling하던 Thread에 Connection을 할당한다.
-
+  
 - Connection Pool 크기
   - MySQL : 600명에 15~20개의 Connection Pool
   - 모 테크 블로그 : Tn * (Cm - 1) +1
@@ -1492,15 +1527,27 @@
 
   - Post를 통해 RequestBody를 받을 때, `Jackson2HttpMessageConverter`에서 Json을 `ObjectMapper`를 이용해 매핑을 시켜주기 때문에 Setter는 필요없다.
 
+    - Getter를 통해 매핑할 객체의 필드 정보를 얻는다.
     - ObjectMapper
+      - ObjectMapper는 내부적으로 Reflection을 통해 기본생성자로 객체를 생성하고 Reflection이 필드를 set하여 초기화 한다.
+        - Getter나 Setter 중 하나는 필수적이며, 주로 Getter를 사용한다.
+        - 기본 생성자는 필수
       - `readValue([JSON String],[Object.class])`
       - `writeValue([생성할 파일],[object])`
         - object -> json : `writeValueAsString([object])`
 
-  - Get에서는 Jackson2HttpMessageConverter가 아닌 `WebDataBind`에서 파라미터값을 받아준다. 이때, WebDataBind는 기본적으로 `initBeanPropertyAccess`메서드를 통해 파라미터와 객체를 매핑시켜주는데, 이는 `Java Bean`으로 등록해주기 때문에 Setter가 필요하게된다.
-
-  -  Get에서 Setter없이 파라미터를 객체로 매핑해주기 위해서는 `initDirectFieldAccess`로 빈 등록이 아닌 필드에 직접 접근해 할당하도록 한다.
-
+  - Get에서는 RequestParam으로 object를 받을땐 Jackson2HttpMessageConverter가 아닌 `WebDataBind`에서 파라미터값을 받아준다. 이때, WebDataBind는 기본적으로 `initBeanPropertyAccess`메서드를 통해 파라미터와 객체를 매핑시켜주는데, 이는 `Java Bean`으로 등록해주기 때문에 Setter가 필요하게된다.
+  
+    - WebDataBind는 JavaBean을 따르기 때문에 Setter가 필요하다.
+      - 기본 생성자 필수
+      - 인스턴스 변수는 모두 private
+      - Getter, Setter 필수
+      - Serializable 선언
+  
+  - Get에서 Setter없이 파라미터를 객체로 매핑해주기 위해서는 `initDirectFieldAccess`로 빈 등록이 아닌 필드에 직접 접근해 할당하도록 한다.
+  
+    - 해당 방법을 사용한다면 Reflection을 통해 객체를 생성하기 때문에 Setter가 필요없어진다.
+  
     - ```java
       @Slf4j
       @ControllerAdvice
@@ -1512,6 +1559,13 @@
           }
       }
       ```
+  
+- ModelAttribute
+
+  - 요청을 받는 경우 RequestBody와 RequestParam뿐만 아니라 ModelAttribute도 있다.
+  - ModelAttrubute는 폼 형태의 Http Body와 요청 파라미터를 생성자나 setter로 바인딩하기 위해 사용한다.
+    - Reflection으로 인자가 있는 생성자를 찾고, 없다면 부분 인자의 생성자를 찾고 그렇지 않다면 기본 생성자로 객체를 생성하고 setter로 필드를 추가해준다.
+
 
 
 

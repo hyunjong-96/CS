@@ -1396,11 +1396,11 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
   + strip : 문자열 앞 뒤의 공백 제거
     + Java 8에는 trim이라는 공백 제거 함수가 있는데 \u200이하의 공백 문자만 제거해줄수있지만 java 11의 strip은 더 많은 공백문자열을 제거해줄 수 있다.
   + repeat(n) : 문자열을 n번 반복하여 반환
-+ Collection의 toArray()메소드를 오버로딩하는 것이 추가되어 IntFunction이 추가되어 원하는 타입의 배열을 선택하여 반환. (String[]::new 와 같은 선언이 가능해짐)
++ Collection의 toArray()메소드를 오버로딩하는 것이 추가되어 IntFunction이 추가되어 원하는 메서드 참조를 이용해 타입의 배열을 선택하여 반환. (String[]::new 와 같은 선언이 가능해짐)
   + <img width="514" alt="image" src="https://user-images.githubusercontent.com/57162257/181903621-6b0527b5-cddf-4fd7-b6e0-46202a0bd9ac.png">
   + <img width="509" alt="image" src="https://user-images.githubusercontent.com/57162257/196023875-252c1fdb-d499-4adb-b864-f6b78eb57adf.png">
   + Java 8에서는 list.toArray(new String[0])으로 변경해주는데 파라미터로 넘겨주는 0은 만들 배열의 크기이다. 만약 list의 크기보다 넘겨주는 값이 더 크다면 반환되는 배열의 남은 공간에는 null로 나오게 된다.
-+ 람다 표현식에서 지역변수에 var 사용이 가능해져 컴파일 시 타입을 추론하게 하고 타입에 사용할수 있는 어노테이션을 사용할 수 있다..
++ 람다 표현식에서 매개변수에 var 사용이 가능해져 컴파일 시 타입을 추론하게 하고 타입에 사용할수 있는 어노테이션을 사용할 수 있다..
   + <img width="561" alt="image" src="https://user-images.githubusercontent.com/57162257/181903638-846ceb6c-6dc8-4294-bcc9-519a7b696492.png">
 
 </details>
