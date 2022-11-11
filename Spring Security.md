@@ -62,12 +62,12 @@
         1. Session에서 SecurityContext를 가져온다.
         2. SecurityContextHolder에 SecurityContext를 저장한다.
     - UsernamePasswordFilter : login요청을 감시하며 인증과정 진행.
-    - SessionManagementFilter : 요청이 시작된 이후 인증된 사용자인지 확인하고, 인증된 사용자인 경우 동시 로그인 확인 등을 확인한다.
-    - ExceptionTranslationFilter : filter chain내에서 발생되는 모든 예외를 처리한다.
-      - AuthenticationEntryPoint : 인증되지 않은 사용자가 요청했을 경우 처리
-      - AccessDeniedHandler : 인가되지 않은 사용자가 요청했을 경우 처리
+    - SessionManagementFilter : 사용자의 동시로그인 제한 등의 기능을 제공
+    - ExceptionTranslationFilter : 내부적으로 FilterSecurityInterceptor를 사용하여 AuthenticationException또는 AccessDeniedException을 받는다면 예외를 처리해준다.
+      - AuthenticationEntryPoint : 인증되지 않은 사용자가 요청했을 경우 AuthenticationException을 받고 AuthenticationEntyPoint를 실행하여 401과 함께 인증을 유도한다.
+      - AccessDeniedHandler : 권한이없는 기능을 사용할 경우 AccessDeniedException을 받고 AccessDeniedException을 실행하여 403을 보낸다.
     - FilterSecurityInterceptor : 인가처리 담당 필터
-      - 인증없이 요청하게되면 AuthenticationException 발생
+      - 인증객체없이 요청하게되면 AuthenticationException 발생
       - 권한없는 요청시 AccessDeniedException 발생
 
 
@@ -195,15 +195,14 @@
   - 인증된 객체가 저장된  SecurityContextHolder는 thread local에 저장되기 때문에 각 스레드에서 전역적으로 사용자 정보를 사용할 수 있고 각 스레드 별로 다른 인증객체를 가질 수 있습니다.
     - thread local : 스레드에서 독립적으로 사용할 수 있는 지역변수
     - <img width="685" alt="image" src="https://user-images.githubusercontent.com/57162257/188788345-780eff5e-0af6-43e2-aa9b-e1bf34229dcf.png">
-
 - SecuirtyContextHolder
   - 인증된 객체인 Authenticaion을 저장하는 SecurityContext를 감싸고 있는 Wrapper Class입니다.
   - SecurityContext 저장 방식을 설정해 줄 수 있습니다
     - Thread_Local : 스레드당 security context 할당
     - Inheritable_Thread_Local : 부모 스레드와 자식스레드가 동일한 security context를 가집니다.
     - Global : 메모리에서 하나의 SecurityContext 참조
-
 - <img width="1034" alt="image" src="https://user-images.githubusercontent.com/57162257/188788414-2ff61688-e20e-4bfb-ae40-148c4e9bf024.png">
+- `Authentication authentication = SecurityContextHolder.getContext().getAuthentication()`
 
 </details>
 

@@ -375,7 +375,8 @@
 - Spring Batch에서 JPA를 사용하여 ToMany관계의 엔티티를 조회할때 N+1 문제가 발생한다.
 - HibernatePagingItemReader, HibernateCursorItemReader들은 @BatchSize를 선언해주어 In 쿼리를 생성하거나 fetch join을 사용해서  N+1문제를 해결할 수 있다.
 - 하지만 JpaPagingItemReader에서는 fetch join이나 BatchSize설정으로도 N+1문제가 발생한다.
-  - 다른 ItemReader에서는 Chunk단위로 트랜잭션이 관리되지만 JpaPagingItemReader인 경우 Reader (doReadPage())에서 진행하기 때문에 각 paging 쿼리가 생성될 때마다 별개의 트랜잭션으로 진행되기 때문에 이전의 요청은 트랜잭션 세션이 종료된 상태이기 때문에 추가 조회 쿼리를 생성해야한다.
+  - Batch는 트랜잭션 내부에서 수행되게 된다.
+  - 다른 ItemReader에서는 Chunk단위로 트랜잭션이 관리되지만 JpaPagingItemReader인 경우 Reader (doReadPage())에서 진행하기 때문에 각 paging 쿼리가 생성될 때마다 별개의 트랜잭션으로 진행되기 때문에 이전의 요청은 트랜잭션 세션이 종료된 상태이기 때문에 BatchSize가 적용되지 않아 추가 조회 쿼리를 생성해야한다.
   - 해결방법
     - JpaPagingItemReader에서 doReadPage에서의 트랜잭션을 제거하면 Chunk단위로 트랜잭이 관리되어 N+1을 해결할 수있다.
     - 하지만 안정성이 확실하지 않기 때문에 추천하는 방법은 아니다.
@@ -737,7 +738,7 @@
     - CONTINUABLE : 작업이 남아있음
     - FINISHED : 더이상의 반복 없음
 
-- FaultTolerant
+- FaultTolerant (장애허용시스템)
   - 작업 중 오류가 발생해도 Step이 즉시 종료되지 않고 Retry또는 Skip기능을 활성화 함으로서 내결함성 서비스가 가능하다.
     - 내결함성  : 일부 구성요소가 동작하지 않아도 계속 작동할 수 있는것.
     - Skip
