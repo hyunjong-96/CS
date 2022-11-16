@@ -2362,7 +2362,7 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
 
 -----------------------
 
-### Tree
+### 디자인 패턴
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -2373,7 +2373,44 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
 
 -----------------------
 
-+ 
++ singleton
+  + 하나의 인스턴스만 생성하여 데이터를 공유하는 전략
+  + 장점
+    + 하나의 인스턴스를 공유하기 때문에 메모리를 효율적으로 사용할수 있고 데이터를 공유한다.
+
+  + 단점
+    + 생성자가 private 이기 때문에 상속이 불가능하고 Mock을 이용한 테스트가 어렵다
+    + 동시성 문제가 발생할 수 있다.
+    + 내부적으로 인스턴스를 생성하여 직접적으로 인스턴스를 참조하기 때문에 DIP를 위반한다.
+
++ strategy
+  + 옵션에 따른 행동을 캡슐화하여 인스턴스를 정의하여 독립적이고 상호 교환이 가능하도록 설계
+  + 기차,자동차의 RoadStrategy, RoadStrategy / CoffeMachine의 americanoStrategy, cafelatteStrategy
+
++ state
+  + 각 상태를 클래스로 만들고 해당 상태에서 이루어질수 있는 행동을 정의하도록 설계
+  + Labtop의 PowerState(off, on,saving)
+
++ command
+  + 행위들을 클래스로 만들어 캡슐화하여 설계
+  + OKGoogle의 LampCommand, HeaterCommand
+
++ proxy
+  + 타겟클래스를 대신해서 역할을 수행하는 객체를 만들어 사용
+  + 유튜브 동영상에서 썸네일을 보는 기능(프록시 객체), 커서를 올리면 프리뷰를 보여주는 동작(프록시 객체->타겟 객체)
+
++ adapter
+  + 서로다른 인터페이스 사이에서 호환될수 있도록 해주는것
+  + 일식셰프의 정의된 메소드와 디저트 셰프의 정의된 메소드가 다르게 정의되어있을때, 동일한 메서드로 일식셰프와 디저트 셰프의 메서드를 수행할수있도록 해줌.
+
++ observer
+  + 특정 객체에 이벤트가 발생했을때, 연관된 객체들(observers)에게 통지하도록 하는 디자인 패턴
+  + 특정 객체에 관련된 객체들이 강렬한 의존관계가아닌 어떤 이벤트에 캡슐화되어 느슨한 연결로 이루어짐(User, Room, chatroom, devroom)
+
++ composite
+  + 포함시킨것과 포함된것들이 동일한 동작을 수행하도록 만든 패턴
+  + 파일, 폴더는 size와 remove라는 동일한 동작을 수행하도록 file 인터페이스를 구현하고 있다
+
 
 
 </details>
