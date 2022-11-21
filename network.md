@@ -368,19 +368,72 @@
 
 - 통신과정
 
-  1. 목적 IP의 Mac주소를 알기 위해 ARP Table도 확인해봤는데 없고, ARP Request를 보냈는데도 없다면, 해당 네트워크에 데이터를 보낼 호스트가 없다.
-
-  2. 송신 호스트는 게이트웨이(Router)에게 ARP Request를 보내어 Router의 Mac주소를 얻고 Router에 데이터를 전송한다.
-
-  3. 라우터는 Routing Table을 통해 수신 호스트 IP를 관리하는 라우터를 찾는다.
-     - Routing Table은 ARP를 통해 데이터를 전달할 IP와 Mac을 매칭하여 보낼 라우터의 Mac주소로 보낸다.
-     - 마찬가지로 ARP Table에 next hop IP가 없다면 ARP Request를 통해 next hop IP의 MAC주소를 찾아와 저장한다.
-
-  4. 수신 호스트 IP를 관리하는 라우터 자신의 Mac주소를 전달하고 해당 라우터는 Mac주소를 통해 데이터를 전달한다.
-
-  5. 수신 호스트 IP를 관리하는 라우터는 수신 IP는 알지만 Mac주소를 모르기 때문에 다시 ARP Request를 통해 Mac주소를 수신 IP의  Mac주소를 알게되고 해당 Mac주소에 데이터를 전달한다.
-
   <img width="400" alt="image" src="https://user-images.githubusercontent.com/57162257/195504639-1d8bca30-26db-44cd-a16c-cbfb7ff1c343.png">
+
+- ARP Table : IP주소와 MAC을 매핑 시켜주는 역할
+- Routing Table : 목적지 IP와 통신하기 위해 어떤 IP(next hop IP)와 통신해야하는지 매칭시켜주는 역할
+- Routing Table을 통해 Router에서 목적지 IP로 가기 위한 IP를 가지고 있다고 하더라도, MAC주소가 없다면 전달할 수 없다. 그렇기 때문에 ARP Table을 통해 해당 IP로의 MAC주소를 얻어서 목적지 IP로 가기위한 다음 경로의 MAC으로 이동해야한다.
+
+1. IP 1.1.1.2인 호스트(A)에서 IP 4.4.4.2인 호스트(B)에 데이터를 전송하려고한다.
+2. B의 mac을 찾기 위해 ARP Request를 보낸다.
+3. L2 스위치에서 ARP Request를 수신하고 브로드 캐스트를 보낸다.
+4. 해당 LAN에는 목적 IP가 존재하지 않기 때문에 Reply가 오지 않는다.
+5. A는 외부 네트워크에 존재하는 B를 찾기위해 L3 라우터의 mac으로 요청을 보낸다.
+   - 출발지MAC : AA::::AA, 목적지MAC : EE::::EE, 출발지IP : 1.1.1.2, 목적지IP : 4.4.4.2
+6. EE::::EE 라우터에서 목적지 IP대역인 라우터를 Routing Table에서 라우터의 IP를 찾는다.
+7. 라우터 IP를 찾고 ARP Table에서 해당 IP의 MAC을 찾는다.
+8. EE::::EE 라우터에서 출발,목적 MAC을 갱신하여 다음 MAC으로 패킷을 전송한다.
+   - 출발지MAC : EE::::EE, 목적지MAC : HH::::HH, 출발지IP : 1.1.1.2, 목적지IP : 4.4.4.2
+9. HH::HH 라우터에서 목적지 IP를 확인하고 MAC주소를 찾기 위해 ARP Request를 요청한다.
+10. 해당 대역의 스위치에서 ARP Request를 받고 브로드캐스트로 4.4.4.2의 MAC을 Reply받는다.
+11. 해당 라우터는 ARP Table에 B의 Mac와 IP를 저장하고 출발, 도착 MAC을 갱신한다.
+    - 출발지MAC : HH::::II, 목적지MAC : DD::::DD, 출발지IP : 1.1.1.2, 목적지IP : 4.4.4.2
+12. 자신의 IP가 목적지인 B가 패킷을 받는다.
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### NAT & PAT
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
++ NAT(Network Address Translation)
+  + <img width="507" alt="image" src="https://user-images.githubusercontent.com/57162257/202974400-2952336c-c29a-474a-9d0d-272058e7466e.png">
+  + 네트워크 주소 변환 기술로써, IP패킷이 트래픽 라우팅 장비를 거치면 이동할때 헤더의 IP를 변경하는 작업
+  + 트래픽 분산, 방화벽을 사용하기 위해 사용된다.
+  + 하나의 사설 IP와 공인 IP를 매칭시켜 인터넷에 요청
+  + 내부에서 외부로 요청이가능하고, 외부에서 내부로 요청이 가능하다.
+  + 외부에서 요청을 해야하는 naver홈페이지 등에 사용
+
++ PAT(Port Address Translation)
+  + <img width="512" alt="image" src="https://user-images.githubusercontent.com/57162257/202974794-4ecb30b2-babb-467b-81ff-ce6cc358c852.png">
+  + 하나의 공인 IP에 여러 사설 IP를 매칭하는 방법
+  + 하나의 공인 IP를 사용하되 port를 이용해 사설 IP를 구분한다.
+  + 내부에서 외부로 요청은 가능하나, 외부에서 내부로의 요청은 불가능하다.
+  + 내부에서 외부로 요청을 보내는 경우 사용
+    + 학교나 학원에서 제한된 공인 IP를 통해 외부에 요청
+
+  + 공인IP를 절약할 수 있다.
+
 
 
 
