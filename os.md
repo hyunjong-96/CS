@@ -899,58 +899,6 @@
 
 -----------------------
 
-### Synchronization (동기화)
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
------------------------
-
-- 프로세스 동기화 : 하나의 자원을 동시에 여러 프로세스가 동시에 접근하는것을 제어
-- 스레드 동기화 : 하나의 코드블럭 또는 메소드를 여러 스레드가 동시에 접근하는 것을 제어
-- 동기화 방법 : 뮤텍스, 세마포어
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
-### 뮤텍스 & 세마포어
-
-<details>
-   <summary> 예비 답안 보기 (👈 Click)</summary>
-<br />
-
-
-
------------------------
-
-- 뮤텍스와 세마포어는 여러개의 프로세스나 스레드가 공유자원 또는 임계영역(critical section)에 동시에 접근하는 것을 막기위한 방법
-- 뮤텍스 (Mutex) : 오직 한개의 프로세스나 스레드 만이 공유자원에 접근하도록 제어하는 것. 동기화 대상이 하나이다.
-- 세마포어 (Semaphore) : 세마포어 변수만큼의 스레드나 프로세스가 접근할수 있도록 제어하는 것. 동기화 대상이 여럿일 수 있다.
-
-</details>
-
------------------------
-
-<br>
-
-
-
-<br>
-
------------------------
-
 ### 교착상태(Dead Lock)
 
 <details>
@@ -1056,6 +1004,264 @@
   - 상호 배제 (Mutal Exclusion) : 하나의 프로세스가 임계영역에 있다면 다른 프로세스의 접근을 막는것.
   - 진행 (Progress) : 임계영역을 사용하는 프로세스가 없을때 프로세스의 접근이 가능하다
   - 한정 대기 (Bounded Waiting) : 임계영역에 들어갔다온 프로세스는 다음 접근에 제한을 받음.
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Synchronization (동기화)
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 프로세스 동기화 : 하나의 자원을 동시에 여러 프로세스가 동시에 접근하는것을 제어
+- 스레드 동기화 : 하나의 코드블럭 또는 메소드를 여러 스레드가 동시에 접근하는 것을 제어
+- 동기화 방법 : 뮤텍스, 세마포어
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 스핀락&뮤텍스 & 세마포어
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- 스핀락
+
+  - 공유 자원에 대한 프로세스, 스레드의 동기화를 위해서는 락이 필요합니다.
+
+  - 락을 얻을때까지 반복적으로 락을 요청하는 것을 스핀락이라고 합니다.
+
+  - ```java
+    int lock = 0;
+    class critical{
+      while(test_and_set(lock) == 1);
+      //...critical_section
+      lock = 0;
+    }
+    
+    int test_and_set(int lock){
+    	int old_lock = lock;
+      lock = 1;
+      return old_lock;
+    }
+    ```
+
+    - 스레드가 critical_section에서 작업을 위해 test_and_set을 호출하여 lock을 얻습니다.
+    - lock이 0인 경우 반복문을 빠져나와 critical_section을 수행하고 lock을 반납합니다.
+    - test_and_set은 CPU에 의해 관리되는 atomic한 메소드이기 때문에 T1, T2가 동시에 test_and_set을 호출하여도 CPU레벨에서 lock을 관리하여주기 때문에 동시성 문제를 방지할 수 있습니다.
+
+  - 단점
+
+    - 스핀락의 경우 락을 얻을때까지 반복적으로 락을 요청하기 때문에 CPU낭비가 심합니다.
+
+- 뮤텍스
+
+  - 오직 한개의 프로세스, 스레드가 공유자원에 접근하는 것을 허용하여 동기화 시켜주는 방법입니다.
+
+  - 뮤텍스는 락을 얻기위해 반복적으로 락을 요청하는 것이 아닌, 락이 풀릴때까지 대기하였다가 락이 풀리게 되면 락을 얻어 critical_section을 수행합니다.
+
+  - ```java
+    class Mutex{
+      //스레드의 접근을 허용하게 하는 값, value가 0이면 다른 스레드가 공유자원에 접근하지 못합니다.
+      int value=1;
+      //value도 여러 스레드가 경합하는 자원이기 때문에 value에 critical_section을 제공하기 위한 값.
+      int guard=0;
+    }
+    
+    class critical{
+      mutex_lock();
+      //...critical_section
+      mutex_unlock();
+    }
+    
+    void mutex_lock(){
+      //내부적으로 guard를 1로 변경하여 다른 스레드의 value접근을 제한합니다.
+      while(test_and_set(guard));
+      
+      //다른 스레드가 공유자원을 사용하고있는 경우
+      if(value==0){
+        //...현재 스레드를 큐에 넣어 대기시킵니다.
+      }else{
+        value = 0;
+      }
+      guard = 0;
+    }
+    
+    void mutex_unlock(){
+      while(test_and_set(guard));
+      
+      if(/*큐에 대기중인 스레드가 있는 경우*/){
+        //...대기중이던 스레드 하나를 깨워 작업을 실행시킵니다.
+      }else{
+        value = 1;
+      }
+      guard = 1;
+    }
+    ```
+
+- 세마포어(Semaphore)
+
+  - 하나 이상의 프로세스,스레드가 공유자원에 접근할수 있도록 제한하는 동기화 방법
+
+  - 특징
+
+    - 작업에 대해 우선순위를 적용할수 있는 `시그널 매커니즘`
+    - 여러 프로세스에 적용한다.
+
+  - ```java
+    class Semaphore{
+      int value = 2;
+      int guard = 0;
+    }
+    
+    class critical{
+      semaphore_wait();
+      //...critical_section
+      semaphore_signal();
+    }
+    
+    //공유자원 락 걸기
+    void semaphore_wait(){
+      while(test_and_wait(guard));
+      
+      //공유자원에 접근가능한 수가 0이라면 접근이 가능할때까지 큐에 대기합니다.
+      if(value == 0){
+        //...현재 스레드를 큐에 저장하여 대기시킵니다.
+      }else{
+        //공유자원에 접근가능하다면 접근가능 수인 value를 하나 감소시킵니다.
+        value -= 1;
+      }
+      guard = 0;
+    }
+    
+    //공유자원 락 해제
+    void semaphore_signal(){
+      while(test_and_wait(guard));
+      
+      if(/*큐에 대기중인 스레드가 있다면*/){
+        //...하나의 스레드를 꺼내어 작업을 수행합니다.
+      }else{
+        //공유자원을 사용하였다면 공유자원 접근 가능 수를 하나 증가시킵니다.
+        value += 1;
+      }
+      guard = 0;
+    }
+    ```
+
+  - 시그널 매커니즘
+
+    - 수행할 작업에 대해 우선순위를 지정해주는 방법
+    - <img width="1702" alt="image" src="https://user-images.githubusercontent.com/57162257/205202165-3a2c2fb0-f2e9-48f1-999a-e6bbb4be24bb.png">
+      - 출처 : https://www.youtube.com/watch?v=gTkvX2Awj6g
+
+    - Wait()은 락을 걸어주는 메서드(value--), signal()은 락을 풀어주는 메서드(value++)
+    - task3는 task1이 수행되어야만 작업을 수행할수 있다(task1 우선순위 > task3)
+      - task1의 작업이 끝나고 signal()이 수행되어야 value가 0이 아니게 되기때문에 wait()이 수행되어 task3가 작업할수 있습니다.
+
+    - 세마포어는 같은 프로세스가 아닌 다른 프로세스에서도 적용이 가능합니다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Mutex vs 스핀락 / Mutex & Semaphore
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- Mutex vs 스핀락
+  - 스핀락은 락을 얻기위해 반복적으로 락을 요청하기 때문에 CPU낭비가 심하고 Mutex는 락을 얻을때까지 대기하기 때문에 Mutex가 성능이 좋습니다.
+  - 하지만 멀티코어이거나 critical_section의 작업이 context switching보다 빠르게 끝나는 경우
+
+    - 멀티코어
+      - 특정 코어에서 락을 대기하고 다른 코어에서 락을 사용하고있고 락을 해제했을때 바로 락을 얻을 수 있기 때문에 효율적입니다.
+
+    - context swtiching보다 critical_section작업이 빠른경우
+      - Mutex로 인해 스레드가 대기상태가 될때와 대기상태에서 꺼내어 질떄 context switching이 두번 발생하게 되고 스핀락으로 대기하는것은 한번의 context switching이 발생하기 때문에 더 효율적입니다.
+
+- Mutex & Semaphore
+  - 상호배제만 사용하길 원한다면 Mutex
+  - 작업간의 실행 순서 동기화가 필요하다면 Semaphore
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Mutex vs Binary Semaphore
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- Mutex와 Binary Semaphore는 코드상으로는 유사해보입니다. (하나의 프로세스, 스레드만 공유자원에 접근이 가능하기 때문)
+- Mutex는 락을 가지고있는 개체가 락을 해제할수 있지만, Semaphore는 락을 가지지 않은 개체도 락 해제가 가능합니다.
+  - 세마포어의 시그널 매커니즘에 서로 다른 프로세스에서 value를 다룰수 있습니다.
+
+- Mutex는 priority inheritance를 가지지만 Semaphore는 가지지 않습니다.
+  - Priority Inheritance
+    - <img width="779" alt="image" src="https://user-images.githubusercontent.com/57162257/205206318-36852830-ad39-472e-8c05-fce01273a740.png">
+    - 우선순위가 낮은 프로세스(P1)가 락을 가지고 있을때, 우선순위가 높은 프로세스(P1)가 락을 요청한다면 락이 걸려있어 P1은 공유자원을 사용하지 못합니다.
+    - 이때 P1은 P2에 의존하게되고 우선순위가 낮은 P2는 P1만큼의 우선순위를 가지게 되고 빠르게 critical_section작업을 수행하고 P1에게 락을 넘겨주게됩니다.
+
 
 </details>
 
