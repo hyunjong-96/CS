@@ -1582,7 +1582,185 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
 
 + volatile : 키워드가 선언된 자원은 하나의 스레드만 write하고 나머지 스레드는 read만 한다는 전제 하에 동시성 부여
 
+  + 일반적으로 스레드는 메인 메모리에서 값을 가져와 CPU 메모리에 캐싱하여 값을 사용한다. 멀티 코어 환경에서 다수의 스레드가 공유 자원을 사용하려할때, 캐싱 시점에 따라 스레드가 서로 다른 값을 참조하는 불일치 문제가 발생할수 있다.
+  + volatile은 CPU에 캐싱된 데이터가 아닌 메인 메모리를 직접 참조하여 최신값을 가져와 가시성 문제를 해결한다.
+  + volatile은 가시성 문제는 해결해주지만, 스레드에 의한 동시성 문제를 해결해주지 못한다.
+
 + atomic : 여러 스레드에서 wirte를 해도 동시성 문제가 발생하지 않는다. Synchronized 보다 적은 비용으로 동시성 보장.
+
+  + 원자성을 보장하는 변수로써, CAS(Compare And Swap)알고리즘을 사용하여 동시성 문제와 가시성 문제를 해결하여준다.
+  + CAS
+    + 캐시에 가지고있는 데이터와 메인 메모리에 가지고 있는 데이터를 비교하여 동일한 경우 작업을 수행시켜주는 알고리즘
+    + 동일하지 않는 경우 메인 메모리에 있는 최신값으로 갱신하고 캐시와 메인 메모리에 있는 값이 동일할때까지 반복한다.
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 가시성 문제 & 동시성 문제
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ 가시성 문제
+
+  + 하나의 스레드에서 변경한 공유자원에 대한 값이 다른 스레드에서 보이지 않는 문제
+
+  + ```java
+    public class Solution {
+        private static boolean stopRequested; //무조건 메인 메모리에서 가져온다.
+    
+        public static void main(String[] args) throws InterruptedException {
+            Thread background = new Thread(() -> {
+                for (int i = 0; !stopRequested ; i++); //(N)
+                System.out.println("background 쓰레드가 종료되었습니다!");
+            });
+            background.start(); //(A)
+    
+            TimeUnit.SECONDS.sleep(1);
+            stopRequested = true; //(B)
+            System.out.println("main 쓰레드가 종료되었습니다!");
+        }
+    }
+    ```
+
+  + 위 코드는 가시성 문제로 인해 작업이 종료되지 않는다.
+
+  + stopRequested를 메인메모리에서 가져온다 한들, B스레드에서 stopRequested작업을 true로 변경하여 A스레드의 작업이 멈출것같지만 A스레드에서는 CPU 메모리에 캐싱한 stopRequested를 사용하고 있기 때문에 종료되지 않는다.
+    즉, 가시성 문제로 인해 발생하는 문제
+
++ 동시성 문제
+
+  + 공유자원에 대해 여러 스레드가 동시에 작업할때, 각 스레드의 작업이 다른 스레드에 영향을 미치는 문제
+
+  + ```java
+    public class Solution {
+        private static int t;
+        public static void main(String[] args) {
+            for (int i = 0; i < 100; i++) {
+                new Thread(() -> {
+                    for (int j = 0; j < 1000; j++)
+                        System.out.println(t++);
+                }).start();
+            }
+        }
+    }
+    ```
+
+  + 멀티스레드를 이용하여 t를 증가시켜주는 코드이다.
+
+  + 예상되는 결과는 `1,2,3,4,...100000` 이 출력될것같지만, 결과는 중복되고 순서를 지키지 않고 결과가 반환된다.
+
+  + 각 스레드에서 참조하는 t의 값이 다른 스레드에 의해 변경되기 전에 작업을 수행하여 중복된 결과를 반환하는 일이 발생한것이기 때문이다.
+
+  + 어떤 스레드의 작업이 다른 스레드의 작업에 영향을 미치는것을 `동시성 문제`
+
+
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Thread-Safe한 싱글톤
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ Synchronized method를 이용한 싱글톤
+
+  + ```java
+    class Singletone{
+      private static Singletone instance;
+      
+      public Synchronized Singletone getInstance(){
+        if(instance == null){
+          instance = new Singletone();
+        }
+        return instance;
+      }
+    }
+    ```
+
+  + 싱글톤 인스턴스를 받아오는 getInstance()를 호출하면 instance 생성여부를 확인하고 없다면 새로운 인스턴스를 생성하여 반환해준다.
+
+  + 이때 synchronized method를 사용하여 인스턴스를 가져올때 락을 걸어주어 thread-safe하게 제공한다.
+
+  + 하지만 synchronized method는 성능이 좋지 못하므로 비추천
+
++ Synchronized block + double check를 이용한 싱글톤
+
+  + ```java
+    class Singletone{
+      private static Singletone instance;
+      
+      public static Singletone getInstance(){
+        if(instance == null){
+          synchronized(Singletone.class){
+            if(instance == null){
+              instance = new Singletone();
+            }
+          }
+        }
+        return instance;
+      }
+    }
+    ```
+
+  + instance를 요청하였을떄 instance가 존재하지 않는다면 synchronized block을 사용하여 Singletone객체에 락을 걸어준다면 instance가 없음을 확인하고 instance를 제공해준다.
+
+  + double check를 하면서 없는경우에만 Singletone객체에 락을 걸어주어 synchronized method보다 성능을 개선하였다.
+
++ LazyHolder를 이용한 싱글톤
+
+  + ```java
+    class Singletone{
+      private Singletone(){};
+      
+      private static getInstance(){
+        return LazyHolder.instance;
+      }
+      
+      private static LazyHolder{
+        private static final instance = new Singletone();
+      }
+    }
+    ```
+
+  + JVM의 클래스 초기화 과정에서 원자성을 보장하는 특성을 이용한 방식.
+
+  + getInstance()를 호출하였을때, static class인 LazyHolder의 instance변수를 참조하게된다. instance를 참조하게되면 JVM은 static class를 초기화해주는데, JVM은 class를 초기화할때 원자성을 보장해준다. 동시에 final로 선언되어있기 때문에 인스턴스가 생성되어있다면 기존 인스턴스가 변경되지 않아 하나의 인스턴스를 보장해주게 된다.
+
+  + 즉, JVM의 클래스 초기화 과정에서의 원자성 보장 특성을 이용하여 synchrnized 없이 thread-safe하게 싱글톤을 제공할수 있게 된다.
 
 
 </details>
