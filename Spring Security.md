@@ -67,8 +67,7 @@
       - AuthenticationEntryPoint : 인증되지 않은 사용자가 요청했을 경우 AuthenticationException을 받고 AuthenticationEntyPoint를 실행하여 401과 함께 인증을 유도한다.
       - AccessDeniedHandler : 권한이없는 기능을 사용할 경우 AccessDeniedException을 받고 AccessDeniedHandler을 실행하여 403을 보낸다.
     - FilterSecurityInterceptor : 인가처리 담당 필터
-      - 인증객체없이 요청하게되면 AuthenticationException 발생
-      - 권한없는 요청시 AccessDeniedException 발생
+      - 요청정보(URI), 권한정보(hasRole), 인증정보(SecurityContextHolder)를 통해 요청한 리소스에 대한 권한 여부를 확인한다.
 
 
 </details>

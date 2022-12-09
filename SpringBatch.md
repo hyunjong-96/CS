@@ -189,8 +189,8 @@
 
 -----------------------
 
-- <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/186850076-a9a49683-d962-4d29-a611-d5c758d4634d.png">
-- Chunk는 한번에 하나씩 데이터를 읽어서 Chunk단위를 만들고 Chunk단위에서 트랜잭션을 다루는 것.
+- <img width="589" alt="image" src="https://user-images.githubusercontent.com/57162257/206643082-69aa73d2-5016-477a-a954-213589cc482d.png">
+- Chunk는 한번에 하나씩 데이터를 읽어서 Chunk단위를 만들고 Chunk단위로 트랜잭션을 다루는 것.
 - Chunk지향인 이유
   - `청크지향 프로세싱`이란, 일반적으로 대용량 데이터를 처리하는 배치 프로세스의 특성상 대상 데이터들을 하나의 트랜잭션으로 처리하기에는 어려움이 있기때문에 대상 데이터를 임의의 `Chunk` 단위로 트랜잭션 동작을 수행하는것을 말합니다.
 
@@ -199,8 +199,8 @@
   - Chunk지향 처리의 전체로직을 다루는 클래스.
   - Chunk지향은 Chunk단위 별로 트랜잭션을 생성하고 세션을 종료한다.
   - 구조
-    - Reader : ChunkSize만큼의 데이터를 읽어온다.
-    - Processor : 읽어온 데이터를 하나씩 가공한다.
+    - Reader : ChunkSize만큼의 데이터를 하나씩 읽어온다.
+    - Processor : ChunkSize만큼 읽어온 데이터를 하나씩 가공한다.
     - Writer : ChunkSize만큼 쌓이고 가공된 데이터를 처리한다.
 
 
@@ -230,6 +230,8 @@
 
 - Spring Batch에서 PagingItemReader를 통해 데이터를 읽어오는 경우가 있다.
 - 이때 pageSize는 데이터를 한번에 조회할 Item의 양을 얘기하며 chunkSize는 트랜잭션 처리를 위한 Item의 양이다.
+  - 12개의 데이터가 있고, chunksize가 5라면 3번의 itemRead가 발생
+
 - 예를 들어 pageSize가 10이고 chunkSize가 50이면 한번의 doRead()에서 10개의 데이터를 가져오고 chunkSize를 맞춰주기 위해 총 5번의 doRead()가 발생한다.
 - PageSize와 ChunkSize는 동일하게 설정하는 것을 지향한다.
   - pageSize와 chunkSize를 다르게 설정하면 chunkSize를 맞추기 위해 page만큼의 추가 조회 쿼리가 생성되는데 이로 인해 성능 이슈가 발생할 수 있고 영속성 컨텍스트가 깨지는 문제가 발생 수 있기 때문이다.(JpaPagingItemReader)
@@ -714,7 +716,6 @@
   - <img width="760" alt="image" src="https://user-images.githubusercontent.com/57162257/195257827-3e915830-12c8-4d0b-9e75-71c5e26675c9.png">
   - Step은 RepeatTemplate을 사용해서 Tasklet을 반복적으로 사용
   - ChunkOritentedTasklet은 내부적으로 ChunkProvider를 통해 ItemReader를 읽어오는데 RepeatTemplate를 통해 Chunk size만큼의 데이터를 반복적으로 읽어오게 한다.
-
 - 반복 결정 여부 항복
   - <img width="700" alt="image" src="https://user-images.githubusercontent.com/57162257/195258314-be10b846-acda-4329-9ec2-906d58108602.png">
   - ExceptionHandler
@@ -737,7 +738,6 @@
     - 해당 작업 처리가 끝났는지 판별하기 위한 Enum
     - CONTINUABLE : 작업이 남아있음
     - FINISHED : 더이상의 반복 없음
-
 - FaultTolerant (장애허용시스템)
   - 작업 중 오류가 발생해도 Step이 즉시 종료되지 않고 Retry또는 Skip기능을 활성화 함으로서 내결함성 서비스가 가능하다.
     - 내결함성  : 일부 구성요소가 동작하지 않아도 계속 작동할 수 있는것.
@@ -746,24 +746,22 @@
 
     - Retry
       - ItemProcessor, ItemWriter
-
   - <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/195259789-0bd47092-e035-455d-971a-0ad6a5720b13.png">
   - Skip
     - <img width="797" alt="image" src="https://user-images.githubusercontent.com/57162257/195261882-cb611c73-5eb3-40f3-aa04-16703341ea40.png">
     - 데이터를 처리하는 동안 설정된 Exception이 발생했을 경우, 해당 데이터 처리를 건너뛰는 기능
     - ItemReader
       - Item을 한건씩 읽어오다가 예외 발생시 해당 Item을 skip하고 다음 item을 읽는다.
-
+  
     - ItemProcessor
       - item을 처리하다가 예외가 발생하면 Chunk의 첫 단계로 돌아가 ItemReader에게 Items을 다시 요청한다.
       - 이때 ItemReader는 다시 데이터를 읽어오는 것이 아니라 캐시에 저장되어있는 Items를 다시 보내준다.
       - 다시 Items를 받아온 ItemProcessor는 처음부터 작업을 수행하고 이전에 실패했던 Item에 대해서는 처리하지 않고 넘어간다.
-
+  
     - ItemWriter
       - item을 처리하다가 예외가 발생하면 Chunk의 첫 단계로 돌아가 ItemReader에게 Items를 다시 요청한다.
       - 캐싱된 Items를 ItemProcessor에게 넘긴다.
       - 예외 발생 후에는 ItemProcessor에서 전부 처리하고 ItemWriter에게 넘겨주는 것이 아닌 개별로 한개씩 ItemWriter로 보낸다.
-
   - Retry
     - <img width="778" alt="image" src="https://user-images.githubusercontent.com/57162257/195261912-d12c3a55-0219-42c4-b808-58b5df8079f4.png">
     - ItemProcessor, ItemWriter에서 설정된 Exception이 발생했을 때, 지정한 정책에 따라 데이터를 재시도하는 기능.
@@ -773,9 +771,10 @@
     - ItemPrcessor
       - ItemProcessor에서 예외 발생시 Chunk단계의 처음부터 다시 시작
       - ItemReader는 캐시된 Items를 다시 ItemProcessor에게 전달
-
     - ItemWriter
       - ItemWriter에서 예외 발생시 skip과 다르게 List로 한번에 받아 처리한다.
+  - Rollback
+    - 특정 예외가 발생한다면, 해당 예외에서는 롤백을 수행하지 않도록 한다.
 
 
 </details>
