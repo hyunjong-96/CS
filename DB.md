@@ -178,6 +178,53 @@
 
 -----------------------
 
+### DDL / DCL / DML
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
++ DCL (Data Control Language)
+  + 데이터 권한을 관리하고 객체를 다룰수 있는 언어
+  + GRANT : 사용자에게 권한을 제공
+  + REVOKE : 사용자에게서 권한을 뺴앗는것
+  + COMMIT : 트랜잭션 관리 언어로써, 트랜잭션의 연산 결과를 데이터베이스에 적용하는 것
+  + ROLLBACK : 트랜잭션 관리언어로써, 트랜잭션 연산 결과를 취소하는것
+
++ DDL (Data Define Language)
+  + 테이블을 구성하거나 데이터베이스 구성을 정의하는 언어
+  + CREATE : 데이터베이스 오브젝트(테이블, 인덱스) 생성
+  + DROP : 데이터베이스 오브젝트 삭제
+  + ALTER : 데이터베이스 오브젝트나 구성을 수정
+  + TRUNCATE : 데이터베이스 오브젝트 내용 삭제
+
++ DML (Data Manipulate Language)
+  + 데이터를 조작하는 언어
+  + SELECT
+  + INSERT
+  + UPDATE
+  + DELETE
+
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### 데이터베이스 성능
 
 <details>
