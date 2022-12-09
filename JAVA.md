@@ -1881,6 +1881,103 @@ Collections : 객체를 다루기 위한 Objects 클래스, Collection 프레임
 
 -----------------------
 
+### Try -with - resource
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ try() 에 선언된 객체들에 대해 try가 종료되면 자동으로 객체를 해제해주는 방법
+
++ java에서는 AutoCloseable이 구현된 객체에 대해서 try()에 선언해주게된다면 try가 종료되는 시점에 해당 객체를 해제시켜준다.
+
++ try - catch - finally 로 구현하게된다면
+
+  + ```java
+    public static void main(String args[]) throws IOException {
+        FileInputStream is = null;
+        BufferedInputStream bis = null;
+        try {
+            is = new FileInputStream("file.txt");
+            bis = new BufferedInputStream(is);
+            int data = -1;
+            while((data = bis.read()) != -1){
+                System.out.print((char) data);
+            }
+        } finally {
+            // close resources
+            if (is != null) is.close();
+            if (bis != null) bis.close();
+        }
+    }
+    ```
+
+  + 객체를 null로 선언하고 finally에 객체를 하나씩 close해주어야하기때문에 번거롭다.
+
++ try -with - resource로 구현하게된다면
+
+  + ```java
+    public static void main(String args[]) {
+        try (
+            FileInputStream is = new FileInputStream("file.txt");
+            BufferedInputStream bis = new BufferedInputStream(is)
+        ) {
+            int data = -1;
+            while ((data = bis.read()) != -1) {
+                System.out.print((char) data);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    ```
+
+  + try() 내부에 선언된 객체에 대해 try가 종료되면 자동으로 해제가된다.
+
+  + AutoCloseable이 구현된 객체만 해제가 된다.
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### 멀티 스레드를 사용할때 스레드를 종료하는 방법
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ 멀티 스레드를 사용하다보면 서로의 자원을 할당받기위해 대기하다가 deadlock이 발생할수 있다.
++ 이를 해결하기 위해서는 taskexecutor에서 thread에 대해 shutdown, shutdownNow, awaitTerminate를 통해 스레드의 작업을 관리하여주고 try-with-resoucr를 통해 할당된 자원을 해제시켜주어 안전하게 스레드를 종료하고 자원을 해제시켜준다.
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### public static void main
 
 <details>
