@@ -680,10 +680,12 @@
   - 한계점
     - 프록시 객체를 실행하기 위해서는 반드시 인터페이스를 생성해야한다. (번거로움)
     - 구현 클래스를 빈으로 등록할 수 없지만, 프록시 객체에서 사용하기 위해 구현 클래스를 생성해야한다. (번거로움)
+    - 인터페이스를 상속받고 Reflection API를 통해 프록시 객체를 생성하다보니 성능이 떨어진다.
 
 - CGLib Proxy
 
-  - Dynamic Proxy의 문제를 해결하기 위해 Spring은 GCLib이라는 바이트 조작 라이브러리를 사용하여  프록시 객체가 인터페이스(DiscountService)에 기반하지 않고 클래스(RateDiscountService) 상속을 기반으로 프록시 객체를 생성하게 하였다.
+  - Dynamic Proxy의 문제를 해결하기 위해 Spring은 CGLib이라는 바이트 조작 라이브러리를 사용하여  프록시 객체가 인터페이스(DiscountService)에 기반하지 않고 클래스(RateDiscountService) 상속을 기반으로 프록시 객체를 생성하게 하였다.
+  - 구현체를 직접 상속받음으로써 프록시 객체에서 사용할 메서드를 오버라이드 함으로써 Refelection을 사용하지 않아 성능적으로 향상
   - spring에서는 CGLib Proxy를 사용하지 않았던 이유
     - spring에서 지원하지 않는 방법이였기때문에 별도의 의존성을 추가해야했다(Enhance)
     - default 클래스가 필수적이였다
@@ -943,7 +945,7 @@
 - Handler Adapter
   0. RequestMapping HandlerAdapter
      - @RequestMapping 어노테이션을 사용하는 클래스, 메소드를 대상으로 지원
-  1. HttpRequest HandlerAdapter
+  1. HttpRequestHandler HandlerAdapter
      - HttpRequestHandler인터페이스를 구현하는 클래스를 대상으로 지원
   2. SimpleController HandlerAdapter
      - Controller인터페이스를 구현하는 클래스를 대상으로 지원
@@ -1437,7 +1439,8 @@
 - WAS가 실행되면 DB와 미리 Connection한 객체를 Pool에 저장하여 클라이언트 요청시 Pool에 저장된 Conection을 사용하고 반납하는 방식
 - 사용이유
   - JDBC를 사용하기 위해서는 Driver로드-Connection생성-Statement로 질의생성-ResultSet 결과 매핑-종료의 과정을 거치게 된다. 이때 매번 Driver를 로드하고 Connection을 생성하는 것은 비용이 비싸기 때문에 미리 정의된 Connnection 개수만큼 생성하여 Pool에 저장하여 Connection 비용과 시간을 단축시킬 수 있다.
-
+  - 과도한 Connection 생성으로 서버 자원 고갈을 막기 위함
+  
 - HikaripCP
   - 가벼운 용량과 빠른 속도를 가진 JDBC의 Connection Pool 프레임워크
   - 동작
