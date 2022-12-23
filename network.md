@@ -21,6 +21,7 @@
 + www.naver.com
 + domain
   + 인터넷 상에서 사용되는 고유한 이름
++ DNS의 메시지를 전달하기 위해 하위 프로토콜을 이용하기 때문에 애플리케이션 계층에 존재한다.(7계층)
 
 
 
@@ -73,7 +74,7 @@
   - ccTLD (country code) 국가 코드 최상위 도메인 : kr, co등의 도메인을 다룸
   - Authoriative Name Server를 반환
 - Authoriative Name Server
-  - 실제 DNS 레코드를 관리하고 있는 서버
+  - 실제 도메인과 IP가 저장, 변경되는 서버
   - 마지막 단계로서 도메인의 IP주소를 반환한다.
   - DNS 레코드
     - DNS에 받은 요청을 어떻게 처리할 것인지에 대한 정보
@@ -202,7 +203,7 @@
 - Routing Table과 ARP Table은 모든 PC에 존재하며, Mac Table은 2계층 장비에만 존재한다.
 
   - Routing Table
-    - 목적지 IP로 전달하기 위해 거쳐야할 인접 장비의 IP
+    - 목적지 IP로 전달하기 위해 거쳐야할 인접 장비의 IP 정보 저장 및 제공
     - 다음 이동할 장비또는 LAN의 IP인 next hop IP를 알 수 있다.
     - 만약 Routing Table에 목적 호스트의 IP 즉, next hop IP가 없다면 해당 패킷은 폐기된다.
       - 외부 네트워크에 전달될 routh path가 Routing Table에 등록되어있거나 static하게 정의된 경로가 존재해야한다.
@@ -223,6 +224,7 @@
   4. ARP Table에 next hop IP가 존재하지 않는다면 ARP Request 메세지를 전송한다.
   5. Switch에서 ARP Request를 수신하고 PC0에 대한 Mac table entry를 만들어준다.
      - PC0의 Mac주소와 송신 port번호를 Mac Table에 기록한다.
+     - Mac table의 port는 호스트의 mac주소와 매핑된 식별값?이라고 생각함.
   6. Switch는 ARP Request를 LAN Port로 브로드 캐스트한다.
      - ARP 메세지는 LAN 영역 전체로 전송된다.
   7. ARP Request를 수신한 PC1은 자신의 ARP Table에 PC0의 IP와 MAC을 저장하고 자신의 MAC주소를 담은 ARP Reply를 보낸다.
@@ -271,7 +273,7 @@
 + ARP (Address Request Protocol)
   + 단말간 통신에서 IP주소를 이용해 목적지를 지정하지만, 실제 데이터 이동을 위해 Mac주소를 사용해야한다.
   + ARP를 통해 LAN에서 IP와 Mac주소를 매칭하여 목적지를 찾아갈수 있게 해준다.
-    - LAN (Local Address Network) : 2계층에서 네트워크 매체를 이용해 가까운 지역을 한데 묶은 컴퓨터 네트워크
+    - LAN (Local Address Network) : 2계층에서 가까운 장비들을 하나의 그룹으로 만든 지역 네트워크
       - 또는 ARP Request가 도달하는 영역
     - IP와 MAC을 매칭하여 저장하고 있는 테이블을 ARP 테이블
   + ARP 테이블 생성과정
@@ -319,27 +321,33 @@
 
 -----------------------
 
-+ 라우터는 전용회선을 통해 LAN에 연결된 컴퓨터들이 인터넷을 사용할 수 있게 해주는 장비
-+ 데이터를 목적지까지 전달해주고 2개 이상의 서로 다른 네트워크를 연결하여 데이터를 주고받을 수 있는 중개 기능
++ 라우터는 LAN상에있는 호스트들에게 메시지를 전달하거나 다른 LAN에 메시지를 전달하기 위해 중개역할을 하는 장비
 + 라우터의 동작 원리
   + 직접 전달 : 자신의 LAN에 ARP Request하여 데이터를 전달하는 경우
   + 간접 전달 : 다른 라우터에게 ARP Reqeust하여 다른 라우터를 통해 데이터를 전달하는 경우
     + 목적지 라우터로 이동하기 위해서는 목적지 라우터의 route path가 Routing Table에 저장되어있어야한다. 만약 저장되어있지 않다면 해당 패킷은 폐기된다.
-
 + 라우터 목적지(Router Path) 학습 방법
   + Connected
     + 물리적으로 인접한 장비의 IP주소를 알아와 Routing Table에 저장
-
   + Static
     + 사용자가 직접 목적지 IP와 next hop IP정보를 입력하는 방식
     + 경로관리에 효율적이지만, 네트워크 변화에 느리다.
-
   + Dynamic
     + 각 라우터들이 가지고있는 정보를 공유하여 Routing Table에 저장
     + 주기적으로 최적 경로를 계산하여 테이블 정보 유지
     + 네트워크 환경에 빠르게 대처할 수 있지만 주기적 계산으로 CPU사용량이 많아진다
-
-
++ 과정
+  1. PC에서 다른 LAN상에있는 Server에게 메시지를 보내려고할때 PC의 Routing Table을 통해 DefaultGateWay(Router) IP를 가져옵니다.
+  2. Router IP의 Mac을 알기 위해 ARP Request를 요청하고 Router로 부터 ARP Reply를 받습니다.
+  3. 전달받은 Router의 Mac으로 패킷을 전달합니다.
+  4. Router는 목적지 IP를 다루는 라우터를 찾기 위해 연결되어있는 다른 LAN의 Router의 IP를 찾기 위해 Routing Table에서 next hop ip를 찾습니다. (여기서 찾는 next hop ip는 연결되어있는 DefaultGateWay의  ip)
+  5. Router는 ARP Table을 통해 next hop ip의 mac주소로 전달합니다.
+     - Router는 이동할때 send mac address를 자신의 interface mac address로 변경하고, receive MAC address를 next hop ip의 mac으로 변경합니다.
+  6. 패킷을 전달받은 Router2는 Routing Table을 통해 목적 IP가 자신의 LAN에 있는지 확인합니다.
+  7. 자신의 LAN에 있다면 Server의 MAC을 찾기 위해 ARP Request를 요청하고 Server로 부터 ARP Reply로 mac주소를 받아옵니다.
+  8. Router2는 Server의 mac으로 패킷을 전달합니다.
+  9. Server는 패킷을 받고 ARP Table에 PC의 ip와 mac을 저장하고 응답을 보냅니다.
+  10. Server에서 PC로의 응답은 진행했던 과정 반대로 수행합니다.
 
 
 </details>
@@ -371,8 +379,12 @@
   <img width="400" alt="image" src="https://user-images.githubusercontent.com/57162257/195504639-1d8bca30-26db-44cd-a16c-cbfb7ff1c343.png">
 
 - ARP Table : IP주소와 MAC을 매핑 시켜주는 역할
+
 - Routing Table : 목적지 IP와 통신하기 위해 어떤 IP(next hop IP)와 통신해야하는지 매칭시켜주는 역할
+
 - Routing Table을 통해 Router에서 목적지 IP로 가기 위한 IP를 가지고 있다고 하더라도, MAC주소가 없다면 전달할 수 없다. 그렇기 때문에 ARP Table을 통해 해당 IP로의 MAC주소를 얻어서 목적지 IP로 가기위한 다음 경로의 MAC으로 이동해야한다.
+
+- Mac table : L2에서는 ARP Table을 통해 얻은 mac으로 전달하기위해 MacTable에 매핑되어있는 mac의 port로 유니캐스트 하여 호스트에 전달합니다.
 
 1. IP 1.1.1.2인 호스트(A)에서 IP 4.4.4.2인 호스트(D)에 데이터를 전송하려고한다.
 2. D의 mac을 찾기 위해 ARP Request를 보낸다.
@@ -468,9 +480,14 @@
   + <img width="489" alt="image" src="https://user-images.githubusercontent.com/57162257/185790986-173c2460-8ff8-48a8-83e8-63738c3f8d1c.png">
   + 특징
     + 연결형 서비스로 가상 회선 방식 사용하여 한번만 경로를 지정하고 패킷 순서를 보장
+      + 각 요청이 순서가 보장되지 않는다면, 순서가 중요한 작업일 경우 문제가 발생할수 있기때문
     + 3-way handshaking과정으로 연결을 설정하고, 4-way handshaking을 통해 해제한다.
     + 흐름 제어 및 혼잡 제어
     + UDP보다는 속도가 느리다.
+    + 재전송을 통해 신뢰성 보장
+      + 패킷에 문제가 발생하면 TCP Flag 중 Ack패킷을 0으로 전송한다. 그러면 송신측에서 재전송
+      + 문제가 없다면 Ack패킷을 1, seq Number를 증가시켜 다음 패킷을 요청한다
+      + Ack/nack 패킷을 보내지 않는다면 timeout처리되어 해당 패킷을 재전송한다.
 + UDP (User Datagram Protocol)
   + 패킷을 데이터그램 단위로 처리하는 프로토콜
     + <img width="513" alt="image" src="https://user-images.githubusercontent.com/57162257/185790984-b5c4cb5b-8650-4f50-bd73-7495a05efafb.png">
@@ -634,6 +651,60 @@
 
 -----------------------
 
+### 4 - way handshaking인 이유
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+-----------------------
+
++ Server측에서 마지막 패킷을 보내고 나서 FIN 패킷을 보냄으로써, Server에서 모든 패킷을 완전히 전달시켜주기 위해 4way방식을 사용한다.
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### Seq Number를 난수로 생성하는 이유
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+-----------------------
+
++ Seq Number를 순차적으로 생성하게 되면, Connection을 맺고 있을떄 Port는 재사용이 가능했고 두 호스트가 과거에 사용한 포트를 다시 사용할수 있게되는데, 통신할때 Syn를 통해 패킷을 구분할때, 순차적으로 syn을 생성하게 된다면, 이전 connection에서 보내온 패킷으로 착각할수있기때문에 난수로 생성한다.
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
 ### TCP의 오류 제어, 흐름 제어
 
 <details>
@@ -747,7 +818,7 @@
 -----------------------
 
 + HTTP(Hyper Text Transfer Protocol)
-  + www상에서 클라이언트와 서버 사이에서 이루어지는 요청을 처리하는 프로토콜
+  + 웹서버, 웹브라우저 상호간의 데이터 전송을 위한 응용계층의 프로토콜
   + 상태를 가지지않고(stateless) 비연결지향(connectionless)이다.
     + 요청과 응답이 끝나면 연결이 끝나고 연결이 끝나게 되면 클라이언트와 서버간의 상태를 유지하지 않는다.
   + HTTP는 TCP기반의 통신방법이며 단기적으로 Connection하는 TCP라 볼수 있다. TCP기반이기 때문에 Handshake과정이 필요하다.
@@ -1518,15 +1589,23 @@
     + port에는 규약처럼 사용되는 것들이 있는데, HTTP통신 80포트, HTTPS통신 443포트
 + 소켓
   + <img width="300" alt="image" src="https://user-images.githubusercontent.com/57162257/195763421-5d74c289-261a-4a4d-80af-36af7f415aeb.png">
-  + 네트워크상에서 프로세스간 통신의 종착점에서 데이터를 주고 받는 통신방법
+  + <img width="463" alt="image" src="https://user-images.githubusercontent.com/57162257/209352691-e3bea643-684c-4ee5-b7fa-208bebc1d630.png">
+  + 네트워크를 경유하는 프로세스간 통신(IPC)의 종착점
   + 프로토콜 (http) + IP + Port로 정의할 수 있다.
   + 한번의 연결로 연속적으로 메세지를 주고받을 수 있다.
+  + OSI7계층에서 응용계층에 존재하는 응용 프로그램들은 데이터 송수신을 하기 위해 소켓을 거쳐 전송계층의 통신 망으로 전달함으로써 데이터를 송수신 하게된다.
+  + 소켓은 하나의 IP에서 여러개의 소켓을 생성할 수 있습니다. 각 소켓은 소켓의 식별자를 통해 구분
+  + 양방향으로 수행되기 때문에 실시간 데이터를 송수신할 수 있습니다.(실시간 스트리밍)
   + 소켓 통신
-    + 서버 : 소켓 생성 -> 소켓 주소 할당 -> 연결 요청 대기 -> 연결 허용 -> 요청 응답 -> 종료
+    + 서버 : 소켓 생성 -> 소켓 주소(IP, Port) 할당 -> 연결 요청 대기 -> 연결 허용 -> 요청 응답 -> 종료
     + 클라이언트 : 소켓 생성 -> 연결 요청 -> 요청 -> 종료
   + 종류
     + TCP : 스트림
+      + 연결지향적
     + UDP : 데이터그램
+      + 비연결지향적
+
+https://on1ystar.github.io/socket%20programming/2021/03/16/socket-1/
 
 
 
