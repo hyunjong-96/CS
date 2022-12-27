@@ -1222,10 +1222,14 @@
     - keepAliveSeconds, allowCoreThreadTimeout을 설정하여 스레드가 안전하게 종료되도록한다.
     - 빈의 초기화와 삭제 등을 정의하고 있는 DisposableBean인터페이스를 구현한 ExecutorConfigurationSupport클래스를 상속받고 있기 때문에, 애플리케이션 종료시 ExecutorConfigurationSupport.destroy()가 실행되어 실행중인 task를 안전하게 종료시켜준다.
 
+  - Future사용시
+
+    - Cancel(boolean)을 통해 특정 시간안에 작업이 끝나지 않는다면 cancel로 task를 종료시키거나 get()을 호출하여 CancellationException을 발생시켜, 예외 발생시 해당 스레드가 가지고 있는 리소스를 반환하는 식으로 구현(try with resource)
+
   - Spring Batch (Multithread-Step 사용시)
 
     - Step에서 taskExecutor 적용시
-
+  
       - step에서의 taskExecutor설정은 TaskExecutor를 받게되는데 TaskExecutor에는 shutdown과 같은 메서드 없이 execute() 만 정의되어있어 다른 방법으로는 task가 종료되지 않는다.
 
       - ```java
@@ -1235,9 +1239,9 @@
         위처럼 main()메서드에 설정하게되면, 배치 작업이 끝날때까지 메인 스레드가 대기하였다가 jvm을 종료해주게 된다. 이는 실행되었던 작업이 성공적으로 실행되었다는 것을 보장한다.
 
     - @Async 적용시
-
+  
       - @Async를 적용하게되면 spring batch와는 무관하게 비동기 작업이 수행되게 되고 spring container에서 ThreadPoolTaskExecutor를 관리하여 비동기 작업이 수행되기 때문에, 외부에서 해당 빈을 직접 주입받아 shutdown()작업을 수행해주어야한다.
-
+  
       - ```java
         @Component
         @RequiredArgsConstructor
@@ -1266,9 +1270,9 @@
                     .build();                                                                                                
         }  
         ```
-
+  
         배치 job에 대한 이벤트 인터페이스인 JobExecutorListener에서 beforeJob과 afterJob을 오버라이딩하여 실행중인 ThreadPoolTaskExecutor의 스레드를 제어해준다.
-
+  
       - 혹은 위의 방법에서 처럼 ThreadPoolTaskExecutor의 설정(keepAliveSeconds, allowThreadTimeout)으로 task를 제어해준다.
 
 
@@ -1568,7 +1572,11 @@
   - 요청을 받는 경우 RequestBody와 RequestParam뿐만 아니라 ModelAttribute도 있다.
   - ModelAttrubute는 폼 형태의 Http Body와 요청 파라미터를 생성자나 setter로 바인딩하기 위해 사용한다.
     - Reflection으로 인자가 있는 생성자를 찾고, 없다면 부분 인자의 생성자를 찾고 그렇지 않다면 기본 생성자로 객체를 생성하고 setter로 필드를 추가해준다.
-
+  - ModelAttribute는 폼형태의 body와 요청 파라미터를 객체로 받아주는 역할을 한다.
+    - ModelAttribute는 파라미터 접근 방법을 사용한다.(initBeanPropertyAccess)
+      - 기본 생성자로 인스턴스 생성
+      - setter를 통해 필드 주입
+      - 만약 해당 모든 필드를 주입하는 생성자를 사용한다면 setter를 사용하지 않고 객체를 생성할 수 있다
 
 
 
@@ -2111,7 +2119,7 @@
   | ------------ | ---------------------------------------- | -------------------- | ------------------------------------------------------------ |
   | REQURED      | 해당 트랜잭션 사용                       | 새로운 트랜잭션 생성 | Default, 예외 발생시 롤백되고, 호출한곳도 롤백               |
   | MANDATORY    | 해당 트랜잭션 사용                       | 예외 발생            |                                                              |
-  | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 | 별도의 트랜잭션 독립                                         |
+  | REQUIRED_NEW | 해당 트랜잭션 보류, 새로운 트랜잭션 생성 | 새로운 트랜잭션 생성 | 별도의 트랜잭션 독립<br />자식 트랜잭션에서 예외 발생시, 부모에서 처리해준다면 자식 트랜잭션 호출전 작업까지만 커밋 |
   | SUPPORTS     | 해당 트랜잭션 사용                       | 트랜잭션 없이 실행   | 엔티티 조회시 propagation은 supports와 read-only를 사용하는것이 성능적으로 좋다. |
   | NOT_SUPPORT  | 해당 트랜잭션 보류                       | 트랜잭션 없이 진행   | Read-only를 사용할때 사용하면 성능적으로 좋다.               |
   | NEVER        | 예외 발생                                | 트랜잭션 없이 진행   |                                                              |
@@ -2156,7 +2164,8 @@
   - 그렇기 때문에 중첩 트랜잭션의 예외로 부모 트랜잭션이 영향을 받지 않기 때문에 REQUIRED에서 발생한 문제를 해결할 수 있다.
   - 하지만 Hibernate에서는 NESTED를 지원해주지 않는다. DataSourceTransactionManager를 직접 사용할때만 지원해준다.
     - (예상) JPA에서는 변경감지를 통해 업데이트를 지연해서 수행하기 때문에 트랜잭션 경계를 설정할 수 없기 때문에 savepoint를 지원해주지 않는듯하다.
-
+    - JDBC 3.0 이상부터 NESTED를 지원해준다고한다.
+  
 - https://techblog.woowahan.com/2606/
 - https://reiphiel.tistory.com/entry/understanding-of-spring-transaction-management-practice
 
@@ -2193,7 +2202,7 @@
   - 모든 쿼리 메소드 사용시 연관 엔티티를 따로 조회한다. **(N+1 발생)**
 
 - N+1 발생 이유
-  - 쿼리 메소드 사용시 조회 주체에 대한 select 쿼리가 생성되기 때문에 연관 엔티티 조회를 하기 위한 select 쿼리가 추가 생성되기 때문이다.
+  - ~~쿼리 메소드 사용시 조회 주체에 대한 select 쿼리가 생성되기 때문에 연관 엔티티 조회를 하기 위한 select 쿼리가 추가 생성되기 때문이다.~~
 
 - Lazy 로딩에서 findById()시 N+1 발생 이유
   - Lazy로딩시 연관 엔티티는 프록시 객체로 감싸져있기 때문에 연관 엔티티를 조회하기 위한 select 쿼리가 추가 생성되기 때문이다.
@@ -2432,9 +2441,14 @@
   - 엔티티가 아닌 스칼라 타입으로 특정 필드만 선택해서 조회
     - `SELECT o.id, o.name FROM Order o`
     - 스칼라 타입 : 하나의 데이터만 읽을수 있는 타입
-    
   - 읽기 전용 트랜잭션 사용
     - @Transactional(readOnly = true)
+- readOnly = true 이유
+  - 데이터가 의도치않게 변경되는 것을 방지해준다.
+  - 스냅샷, 더티체킹을 수행하지 않아 성능 향상
+  - 디비 서버가 이중화 되어있을때 읽기 노드인 slave에 요청되어 트래픽을 분산시켜줄수 있다
+  - 직관적으로 읽기 전용이라는 의미를 전달할수 있다.
+
 
 
 </details>
@@ -2851,6 +2865,41 @@
   - 유지보수 시간이 줄어든다.
     - 가독성 좋은 코드는 코드 리뷰나 디버깅 시간을 단축 시킬 수 있다.
     - 시간 == 돈
+
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+<br>
+
+-----------------------
+
+### CI/ CD
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+
+
+-----------------------
+
+- CI/CD는 애플리케이션 개발 단계를 자동화 하여 애플리케이션을 사용자에게 짧은 주기로 전달하는것
+- CI (Continuous Integration)
+  - 지속적인 통합으로써, 개발자가 코드를 수정하고 병합하면 자동적으로 코드가 정상작동하는지 빌드하고 테스트를 수행하는것.
+
+- CD (Continuous Deploy)
+  - 지속적인 배포로써, CI를 통해 검증이 끝난 코드를 자동으로 실제 배포를 수행해주는 것
 
 
 

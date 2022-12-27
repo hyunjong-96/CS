@@ -144,7 +144,13 @@
 -----------------------
 
 - 기본 Spring에서 제공하는 bean scope는 Singletone으로 애플리케이션 실행시점에 빈을 생성하여 사용한다. Spring batch에서는 애플리케이션 실행 시점이 아닌 호출 시점까지 Bean의 생성을 지연시키는 @JobScope와 @StepScope가 있다.
+
+- @JobScope는 Job실행시점에 인스턴스를 생성
+
+- @StepScope는 Step실행시점에 인스턴스 생성
+
 - Spring의 request scope처럼 요청시에 빈이 생성된다.
+
 - 사용 이유
   - 동일 컴포넌트 병렬처리 또는 동시처리 가능
   
