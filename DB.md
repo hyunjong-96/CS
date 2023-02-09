@@ -794,6 +794,9 @@
 
 + 페이지 조각화는 특정 컬럼을 기준으로 정렬되어있는 페이지에서 중간에 특정 데이터를 추가한다면 정렬되어있던 페이지의 순서가 뒤죽박죽 되어버리는 것을 이야기한다.
 + 이는 Insert시 발생하는데, 페이지 조각화로 인해 Index 조회시 거쳐야 하는 페이지가 많아져 조회 성능을 떨어트리게 된다.
++ Ex)<img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/216269074-1f471f92-ed46-4fd5-8692-065393c6c640.png">
+  + 페이지가 조각화되었기 때문에 범위탐색에서 QQQ가 원래는 같은페이지였지만 다른 페이지로 분리가되었다. 그렇기 때문에 QQQ가 있는 페이지를 찾기 위해 다시 탐색해야한다.
+
 
 
 
@@ -863,6 +866,8 @@
 
 -----------------------
 
++ https://blog.ex-em.com/1699
+
 + Heap 구조
 
   + Index가 존재하지 않는 테이블 구조
@@ -870,6 +875,7 @@
 
 + 클러스터 인덱스 (Cluster Index)
 
+  + <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/216271022-81b23cbb-45f0-48c4-804b-e95cc66696bd.png">
   + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/194693412-7b9da318-d3b6-40b6-9bbd-c3c368887b3d.png">
   + Root, Intermediate, Leaf(Data) Page로 구성
   + 순차적으로 저장되는 Heap구조와 다르게, 클러스터 인덱스 컬럼을 기준으로 Data Page가 정렬된 상태로 저장
@@ -907,7 +913,7 @@
 + Non-Cluster 인덱스
   + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/194694432-8b08b7db-14f5-4460-8c91-f958c8e89fb3.png">
 
-  + <img width="600" alt="image" src="https://user-images.githubusercontent.com/57162257/194705341-e3248038-2f38-4dd2-b3a5-a8073d485152.png">
+  + <img width="776" alt="image" src="https://user-images.githubusercontent.com/57162257/216262030-764c2888-18d8-436b-a4bf-17109063e142.png">
 
   + 생성 : `  CREATED INDEX [인덱스 이름] ON [테이블 이름] ([인덱스 컬럼1],[인덱스 컬럼2])`
 
@@ -945,7 +951,7 @@
       + 전화번호 컬럼을 인덱스로 사용했을때, 탐색조건으로 
         전화번호의 다섯번째 (하이픈 뒤)가 7이고 여섯번째와 일곱번째의 차가 3인 데이터를 찾고자할때
 
-        쿼리로 표현하자면 where 전화번호 like '___-7%' AND ABS(SUBSTRING(전화번호, 6, 1) - SUBSTRING(전화번호, 7, 1)) = 3 으로 표현하기 때문에 인덱스만으로는 데이터를 찾을 수 없는 경우.
+        쿼리로 표현하자면 where 전화번호 like ' ___-7%' AND ABS(SUBSTRING(전화번호, 6, 1) - SUBSTRING(전화번호, 7, 1)) = 3 으로 표현하기 때문에 인덱스만으로는 데이터를 찾을 수 없는 경우.
 
 
 
@@ -962,7 +968,7 @@
 
 -----------------------
 
-### Include Column (feat. Covering Query, Convered Index)
+### Include Column (feat. Covering Query, Covering Index)
 
 <details>
    <summary> 예비 답안 보기 (👈 Click)</summary>
@@ -973,11 +979,12 @@
 
 -----------------------
 
-- 생성한 Index내에 요구한 데이터(열 데이터)가 없다면 LookUp과정이 발생하여 조회 속도가 느려질수 있다.
-  만약 Index내에 요구한 데이터가 모두 존재한다면 LookUp과정없이 Index수준에서 처리가 가능하기 때문에 조회속도가 빨라진다.
+- 생성한 Index내에 요구한 데이터(열 데이터)가 없다면 데이터를 찾기 위해 디스크 I/O가 발생하여 조회 속도가 느려질수 있다.
+  만약 Index내에 요구한 데이터가 모두 존재한다면 실제 데이터 블럭에 접근 없이 Index수준에서 처리가 가능하기 때문에 조회속도가 빨라진다.
 - 그렇다고 Index key 컬럼에 많은 컬럼을 넣게 된다면 Index가 복잡해지고 저장공간을 많이 차지하기 때문에 성능이 떨어지게 된다.
 - `Include Colume`는 조회하려는 컬럼을 Index key 컬럼에 포함시키지 않고도 Index Page에서 사용할 수 있게 해주는 방법.
-- 요구하는 데이터를 Index 수준에서 모두 처리할 수 있게 하는 쿼리를 `Convering Query`, 사용된 `Index를 Covered Index`라고 한다.
+- 요구하는 데이터를 Index 수준에서 모두 처리할 수 있게 하는 쿼리를 `Convering Query` 
+-  `Covering Index` 는 쿼리를 충족시키는 모든 데이터를 가지고 있는 index
 - Index Key 컬럼은 최대 32개의 컬럼, 1700byte의 제한이 있지만, Included Colume은 최대 1023개의 컬럼 설정이 가능하다.
 - 특징
   - Leaf Page에 Include Colume을 저장하기 때문에 Index key 컬럼에 영향을 주지 않는다.
@@ -1106,13 +1113,51 @@
 
 + Table Full Scan
   + 테이블의 속한 값을 모두 읽어 원하는 값을 찾는다.
-
+  + 한번의 디스크 I/O로 한번에 여러 데이터 블럭을 메모리로 읽어오기 때문에 Index Scan보다 한번의 I/O당 읽어오는 데이터 블럭의 양이 많다.
+    + 즉, 하나의 row당 입출력(I/O)의 비용이 적다.
 + Index Range Scan
   + leaft node까지 수직 탐색 후, LinkedList를 이용해서 범위 탐색이 가능하다.
-
+  + index를 통해 조건을 만족하는 데이터를 찾고, 해당 데이터에서 index에 존재하지 않는 데이터를 찾기 위해 하나의 블럭씩 I/O하여 조건에 맞는 나머지 데이터를 찾아준다.
 + Index Full Scan
   + 모든 값을 읽지않고 Index만 읽어서 탐색할 수 있기 때문에 Table Full Scan보다 비용이 저렴하다.
+  + 선언된 인덱스 컬럼 중 우선순위의 인덱스 컬럼이 조건절에 포함되어있지않다면 full table scan을 수행해야한다. 하지만 full table scan을 하기에는 부담이 된다면 index full scan을 통해 탐색하는 것이 보다 효율적
   + 첫번째 leaft node까지 수직 탐색 후,  리프 노드 전체를 탐색
+
+
+
+</details>
+
+-----------------------
+
+<br>
+
+
+
+
+
+<br>
+
+-----------------------
+
+### Full Table Scan vs Index Scan
+
+<details>
+   <summary> 예비 답안 보기 (👈 Click)</summary>
+<br />
+
+
+
+
+-----------------------
+
+- Full Table Scan은 인접해 있는 블럭들을 한번의 I/O를 통해 한번에 읽어오면서 모든 테이블의 데이터를 메모리로 읽어온다.
+
++ Index Scan은 Index를 통해 쿼리가 필요로 하는 데이터를 찾고 index에 없는 데이터를 한번의 I/O에 하나의 데이터블럭을 가져온다.
++ Index가 있지만 Full Table Scan을 사용하는 경우
+  + 적용가능한 index가 존재하지 않는 경우
+  + 적용가능한 index가 존재하더라도 탐색 범위가 넓은 경우
+  + 한번의 I/O로 가져올수 있는 데이터블럭의 범위의 소량의 크기의 테이블인 경우
+
 
 
 
@@ -1147,6 +1192,7 @@
 4. Optimizer가 SQL문을 최적의 처리 경로를 찾는다.
 5. 실행 엔진이 Storage Engine에 처리를 요청
 6. Storage Engine (MyISAM, InnoDB)이 직접 쿼리 내용 수행 (결과 반환, 데이터 삽입)
+   - ISAM은 row level locking이 되지않아 테이블 lock만 걸리게된다.
 
 </details>
 
