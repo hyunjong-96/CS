@@ -1237,18 +1237,52 @@
 
     - Cancel(boolean)을 통해 특정 시간안에 작업이 끝나지 않는다면 cancel로 task를 종료시키거나 get()을 호출하여 CancellationException을 발생시켜, 예외 발생시 해당 스레드가 가지고 있는 리소스를 반환하는 식으로 구현(try with resource)
 
-  - Spring Batch (Multithread-Step 사용시)
+    - CompletableFuture
 
+      - 비동기로 작업을 수행할때 비동기에서 처리한 결과를 반환시켜줄 작업을 처리할 클래스
+  
+      - ```java
+        public Future<Double> getPriceAsync(String product){
+          CompletableFuture<Double> futurePrice = new CompletableFuture<>();
+          
+          new Thread(()->{
+            double price = calculatePrice(product); //다른 스레드에서 비동기적으로 계산 수행.
+            futurePrice.complete(price); //오랜 시간이 걸리는 계산이 완료되면 Future에 값을 설정한다.
+          }).start();
+          
+          return futurePrice;
+        }
+        ```
+  
+      - 예외
+  
+        - ```java
+          public Future<Double> getPriceAsync(String product){ 
+            CompletableFuture<Double> futurePrice = new CompletableFuture<>();  
+            new Thread(()->{    
+              try{      
+                double price = calculatePrice(product);
+                futurePrice.complete(price);    
+              }catch (Exception ex){      
+                futurePrice.completeExceptionally(ex);    //예외처리
+              }  
+            }).start();  
+            return futurePrice;
+          }
+          ```
+  
+  - Spring Batch (Multithread-Step 사용시)
+  
     - Step에서 taskExecutor 적용시
   
       - step에서의 taskExecutor설정은 TaskExecutor를 받게되는데 TaskExecutor에는 shutdown과 같은 메서드 없이 execute() 만 정의되어있어 다른 방법으로는 task가 종료되지 않는다.
-
+  
       - ```java
         System.exit(SpringApplication.exit(SpringApplication.run(BatchApplication.class, args)));
         ```
-
+  
         위처럼 main()메서드에 설정하게되면, 배치 작업이 끝날때까지 메인 스레드가 대기하였다가 jvm을 종료해주게 된다. 이는 실행되었던 작업이 성공적으로 실행되었다는 것을 보장한다.
-
+  
     - @Async 적용시
   
       - @Async를 적용하게되면 spring batch와는 무관하게 비동기 작업이 수행되게 되고 spring container에서 ThreadPoolTaskExecutor를 관리하여 비동기 작업이 수행되기 때문에, 외부에서 해당 빈을 직접 주입받아 shutdown()작업을 수행해주어야한다.
@@ -1581,13 +1615,15 @@
 - ModelAttribute
 
   - 요청을 받는 경우 RequestBody와 RequestParam뿐만 아니라 ModelAttribute도 있다.
-  - ModelAttrubute는 폼 형태의 Http Body와 요청 파라미터를 생성자나 setter로 바인딩하기 위해 사용한다.
-    - Reflection으로 인자가 있는 생성자를 찾고, 없다면 부분 인자의 생성자를 찾고 그렇지 않다면 기본 생성자로 객체를 생성하고 setter로 필드를 추가해준다.
+  - ~~ModelAttrubute는 폼 형태의 Http Body와 요청 파라미터를 생성자나 setter로 바인딩하기 위해 사용한다.~~
+    - ~~Reflection으로 인자가 있는 생성자를 찾고, 없다면 부분 인자의 생성자를 찾고 그렇지 않다면 기본 생성자로 객체를 생성하고 setter로 필드를 추가해준다.~~
   - ModelAttribute는 폼형태의 body와 요청 파라미터를 객체로 받아주는 역할을 한다.
     - ModelAttribute는 파라미터 접근 방법을 사용한다.(initBeanPropertyAccess)
       - 기본 생성자로 인스턴스 생성
       - setter를 통해 필드 주입
       - 만약 해당 모든 필드를 주입하는 생성자를 사용한다면 setter를 사용하지 않고 객체를 생성할 수 있다
+    - 만약 모든 필드를 주입하는 생성자를 사용한다면 setter가 필요없다.
+      - 해당 인스턴스를 만들어주기 위한 적절한 생성자를 찾아서 인스턴스를 생성하고 바인딩 되지 않는 필드는 setter를 통해 필드를 바인딩
 
 
 
