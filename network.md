@@ -1824,13 +1824,11 @@ https://on1ystar.github.io/socket%20programming/2021/03/16/socket-1/
         + 하드웨어 스위치를 대체하는 소프트웨어 로드밸런서
         + ReverseProxy 형태로 동작한다. 즉, 클라이언트에서 서버에게 요청을 보냈을시 중간에 HAProxy가 대신 요청을 받고 서버에게 요청을 전달한다.
 
-
-    + 로드밸런싱 이중화
-      + Active Proxy와 Stand by Proxy를 지정하고 Active Proxy에서 정상적으로 가상IP로 요청을 받다가 문제가 발생하면 Stand by Proxy가 Active상태가 되며 가상IP를 받아오면서 fail over 해준다.
-      + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/200487554-c680d889-4418-4e2b-90f1-b869c676fae8.png">
++ 로드밸런싱 이중화
+  + Active Proxy와 Stand by Proxy를 지정하고 Active Proxy에서 정상적으로 가상IP로 요청을 받다가 문제가 발생하면 Stand by Proxy가 Active상태가 되며 가상IP를 받아오면서 fail over 해준다.
+  + <img width="500" alt="image" src="https://user-images.githubusercontent.com/57162257/200487554-c680d889-4418-4e2b-90f1-b869c676fae8.png">
 
 + HAProxy(로드밸런싱)의 기능
-
   + NAT(Network Address Translation)
     + 사설IP를 공인 IP로 변경
     + 클라이언트가 로드밸런서의 공인IP로 요청을 보내게 되면 로드밸런서에서 사설IP와MAC주소를 변경하여 실제 서버에 요청을 전달한다.
