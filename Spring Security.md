@@ -61,13 +61,16 @@
       - 인증 후
         1. Session에서 SecurityContext를 가져온다.
         2. SecurityContextHolder에 SecurityContext를 저장한다.
-    - UsernamePasswordFilter : login요청을 감시하며 인증과정 진행.
+    - UsernamePasswordAuthenticationFilter : login요청을 감시하며 인증과정 진행.
     - SessionManagementFilter : 사용자의 동시로그인 제한 등의 기능을 제공
     - ExceptionTranslationFilter : 내부적으로 FilterSecurityInterceptor를 사용하여 AuthenticationException또는 AccessDeniedException을 받는다면 예외를 처리해준다.
       - AuthenticationEntryPoint : 인증되지 않은 사용자가 요청했을 경우 AuthenticationException을 받고 AuthenticationEntyPoint를 실행하여 401과 함께 인증을 유도한다.
       - AccessDeniedHandler : 권한이없는 기능을 사용할 경우 AccessDeniedException을 받고 AccessDeniedHandler을 실행하여 403을 보낸다.
     - FilterSecurityInterceptor : 인가처리 담당 필터
       - 요청정보(URI), 권한정보(hasRole), 인증정보(SecurityContextHolder)를 통해 요청한 리소스에 대한 권한 여부를 확인한다.
+      - 인증되지 않은 사용자가 보호된 자원에 접근시 AuthenticationException발생
+      - 인증된 사용자가 권한이없는 자원에 접근시 AccessDeniedException발생
+      - 위 두 예외가 발생하면 ExceptionTranslactionExceptionFilter를 통해 각각 401과 403예외를 반환
 
 
 </details>
